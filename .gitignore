@@ -1,0 +1,13 @@
+# File temporanei Office
+~$*
+
+# File di sistema
+.DS_Store
+Thumbs.db
+.DS_Store?
+._*
+
+# Backup automatici
+*~
+*.tmp
+*.bak
