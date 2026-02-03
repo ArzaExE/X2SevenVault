@@ -1,0 +1,86 @@
+@startuml
+!theme plain
+top to bottom direction
+
+package "Warehouse Management" {
+  entity Warehouse {
+    * warehouse_id : string
+    --
+    name : string
+    description : string
+    is_active : boolean
+    aisle : Aisle[]
+  }
+
+  entity Aisle {
+    * aisle_id : string
+    --
+    name : string
+    description : string
+    is_active : boolean
+    shelf : Shelf[]
+  }
+
+  entity Shelf {
+    * shelf_id : string
+    --
+    name : string
+    description : string
+    is_active : boolean
+    item : Item[]
+  }
+
+  entity Item {
+    * item_id : string
+    --
+    name : string
+    description : string
+    ai_class_id : integer
+    quantity : integer
+    is_active : boolean
+    reference_photo : string
+    physical_property : PhysicalProperty[]
+  }
+
+  entity PhysicalProperty {
+    * physical_property_id : string
+    --
+    weight : Weight[]
+    width : Width[]
+    height : Height[]
+  }
+
+  entity Weight {
+    weight.unit : string
+    weight.value : float
+  }
+
+  entity Width {
+    width.unit : string
+    width.value : float
+  }
+
+  entity Height {
+    height.unit : string
+    height.value : float
+  }
+}
+
+package "User Management" {
+  entity User {
+    * user_id : string
+    --
+    email : string
+    password_hash : string
+    full_name : string
+    is_active : boolean
+  }
+
+  entity Role {
+    * role_id : integer
+    --
+    role_name : string
+    description : string
+  }
+}
+@enduml
