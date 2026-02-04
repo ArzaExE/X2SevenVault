@@ -40,6 +40,9 @@ package "Warehouse Management" {
     is_active : boolean
     reference_photo : string
     physical_property : PhysicalProperty[]
+    warehouse_id : string
+    aisle_id : string
+    shelf_id : string
   }
 
   entity PhysicalProperty {
