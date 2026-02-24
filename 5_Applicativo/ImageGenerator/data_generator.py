@@ -30,23 +30,23 @@ from glob import glob
 # Environment global variables
 # ==============================================================================
 # Number of output images when the data_generator.py is ejecuted
-N_SAMPLES = 100
+N_SAMPLES = 500
 
 # Data - path for background images
-BACKGROUNDS_PATTERN = os.path.join(os.getcwd(), "data", "backgrounds", "*")
+BACKGROUNDS_PATTERN = os.path.join(os.getcwd(), "data_generate", "backgrounds", "*")
 
 # Data - path for objects images
 # TODO: Create class selection
-OBJECTS_PATTERN = os.path.join(os.getcwd(), "data", "objects", "**", "*")
+OBJECTS_PATTERN = os.path.join(os.getcwd(), "data_generate", "objects", "**", "*")
 
 # current now date to create the result folder name for output images
 DATE = datetime.now().strftime("%Y%m%d_%H%M%S")
 
 # create name for result folder dir
-OUT_DIR = os.path.join(os.getcwd(), "result", DATE)
+OUT_DIR = os.path.join(os.getcwd(), "data_generate", "result", DATE)
 
 #Create classes array
-CLASSES_PATTERN = os.path.join(os.getcwd(), "data", "objects", "**")
+CLASSES_PATTERN = os.path.join(os.getcwd(), "data_generate", "objects", "**")
 
 # Object randomization
 # number of objects for full image
@@ -153,9 +153,9 @@ def create_element(objects_paths, backgrounds_paths, classes_names):
             ),
             flip.transformers.domain_randomization.Draw(),
             flip.transformers.labeler.CreateBoundingBoxes(),
-            flip.transformers.labeler.CreateMasks(classes_names), 
+            # flip.transformers.labeler.CreateMasks(classes_names), 
             flip.transformers.io.SaveImage(OUT_DIR, name),
-            flip.transformers.io.SaveMask(OUT_DIR, name)
+            # flip.transformers.io.SaveMask(OUT_DIR, name)
        ]
     )
 
@@ -211,7 +211,7 @@ def create_google_csv(elements):
 
 def create_yolo_labels(elements):
     import os
-    from collections import defaultdict
+    import shutil
     import uuid
     
     # 1. Mappa classi
@@ -225,46 +225,28 @@ def create_yolo_labels(elements):
     
     print("Classi:", classes)
     
-    # 2. Calcola thresholds PRIMA
+    # 2. Crea struttura YOLO
+    os.makedirs(os.path.join(OUT_DIR, "images/train"), exist_ok=True)
+    os.makedirs(os.path.join(OUT_DIR, "images/val"), exist_ok=True)
+    os.makedirs(os.path.join(OUT_DIR, "labels/train"), exist_ok=True)
+    os.makedirs(os.path.join(OUT_DIR, "labels/val"), exist_ok=True)
+    
+    # 3. Split 80/20
     n_elements = len(elements)
     train_count = int(n_elements * 0.8)
-    val_count = int(n_elements * 0.2)
-    
-    print(f"Split: {train_count} TRAIN, {val_count} VAL")
-    
-    # 3. Processa con split corretto
-    image_annotations = defaultdict(list)
-    for i, element in enumerate(elements):
-        # UUID → string
-        img_name = str(element.name) if isinstance(element.name, uuid.UUID) else str(element.name).replace('.jpg', '')
-        
-        bh, bw = element.image.shape[0], element.image.shape[1]
-        
-        for tag in element.tags:
-            x1 = min(1, tag["pos"]["x"] / bw)
-            y1 = min(1, tag["pos"]["y"] / bh)
-            x2 = min(1, (tag["pos"]["x"] + tag["pos"]["w"]) / bw)
-            y2 = min(1, (tag["pos"]["y"] + tag["pos"]["h"]) / bh)
-            
-            cx, cy = (x1 + x2) / 2, (y1 + y2) / 2
-            w, h = x2 - x1, y2 - y1
-            
-            image_annotations[img_name].append({
-                'class_id': classes[tag['name']],
-                'cx': round(cx, 6), 'cy': round(cy, 6),
-                'w': round(w, 6), 'h': round(h, 6)
-            })
-    
-    # 4. Crea cartelle e split SEQUENZIALE corretto
-    os.makedirs(os.path.join(OUT_DIR, "dataset/labels/train"), exist_ok=True)
-    os.makedirs(os.path.join(OUT_DIR, "dataset/labels/val"), exist_ok=True)
     
     train_files, val_files = 0, 0
     
     for i, element in enumerate(elements):
         img_name = str(element.name) if isinstance(element.name, uuid.UUID) else str(element.name).replace('.jpg', '')
         
-        # ✅ SPLIT CORRETTO: 80% train, 20% val
+        # Salta se nessun oggetto
+        if len(element.tags) == 0:
+            continue
+            
+        # File immagine Flip (già con oggetti)
+        img_src = os.path.join(OUT_DIR, f"{img_name}.jpg")
+        
         if i < train_count:
             split_dir = 'train'
             train_files += 1
@@ -272,25 +254,38 @@ def create_yolo_labels(elements):
             split_dir = 'val'
             val_files += 1
         
-        label_path = os.path.join(OUT_DIR, f"dataset/labels/{split_dir}/{img_name}.txt")
-        if img_name in image_annotations:
-            with open(label_path, 'w') as f:
-                for ann in image_annotations[img_name]:
-                    f.write(f"{ann['class_id']} {ann['cx']} {ann['cy']} {ann['w']} {ann['h']}\n")
+        # ✅ SPOSTA immagine nella cartella corretta
+        img_dst = os.path.join(OUT_DIR, f"images/{split_dir}/{img_name}.jpg")
+        if os.path.exists(img_src):
+            shutil.move(img_src, img_dst)
+        
+        # ✅ Crea label .txt
+        bh, bw = element.image.shape[0], element.image.shape[1]
+        label_path = os.path.join(OUT_DIR, f"labels/{split_dir}/{img_name}.txt")
+        
+        with open(label_path, 'w') as f:
+            for tag in element.tags:
+                x1 = min(1, tag["pos"]["x"] / bw)
+                y1 = min(1, tag["pos"]["y"] / bh)
+                x2 = min(1, (tag["pos"]["x"] + tag["pos"]["w"]) / bw)
+                y2 = min(1, (tag["pos"]["y"] + tag["pos"]["h"]) / bh)
+                cx, cy = (x1 + x2) / 2, (y1 + y2) / 2
+                w, h = x2 - x1, y2 - y1
+                f.write(f"{classes[tag['name']]} {round(cx,6)} {round(cy,6)} {round(w,6)} {round(h,6)}\n")
     
-    # 5. data.yaml
-    data_yaml = f"""path: {os.path.abspath(os.path.join(OUT_DIR, 'dataset'))}
-train: images/train
-val: images/val
+    # 4. data.yaml
+    data_yaml = f"""path: '/content/gdrive/My Drive/X2SevenVault/'
+train: data/images/train
+val: data/images/val
 nc: {len(classes)}
 names: {list(classes.keys())}
 """
-    os.makedirs(os.path.join(OUT_DIR, "dataset"), exist_ok=True)
-    with open(os.path.join(OUT_DIR, "dataset/data.yaml"), 'w') as f:
+    with open(os.path.join(OUT_DIR, "data.yaml"), 'w') as f:
         f.write(data_yaml)
     
-    print(f"✅ Train: {train_files} files, Val: {val_files} files, {len(classes)} classi")
+    print(f"✅ Train: {train_files} img+txt, Val: {val_files} img+txt spostati!")
     return classes
+
 
 create_out_dir()
 setup_environment(OBJECTS_PATTERN, BACKGROUNDS_PATTERN, N_SAMPLES, CLASSES_PATTERN)

@@ -1,0 +1,5 @@
+path: '/content/gdrive/My Drive/X2SevenVault/'
+train: data/images/train
+val: data/images/val
+nc: 10
+names: ['micro', 'dino', 'SSD', 'eletric_socket', 'vr', 'glove', 'helmet', 'pencil_case', 'airpods', 'bottle']
