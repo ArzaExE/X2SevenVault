@@ -37,7 +37,7 @@ BACKGROUNDS_PATTERN = os.path.join(os.getcwd(), "data_generate", "backgrounds", 
 
 # Data - path for objects images
 # TODO: Create class selection
-OBJECTS_PATTERN = os.path.join(os.getcwd(), "data_generate", "objects", "**", "*")
+OBJECTS_PATTERN = os.path.join(os.getcwd(), "data_generate", "objects", "bottle", "**", "*")
 
 # current now date to create the result folder name for output images
 DATE = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -52,7 +52,7 @@ CLASSES_PATTERN = os.path.join(os.getcwd(), "data_generate", "objects", "**")
 # number of objects for full image
 # (1) = only one image -
 # (1,3) = random objects number
-N_OBJECTS = (1,2)
+N_OBJECTS = (1)
 
 
 # ==============================================================================
@@ -216,12 +216,13 @@ def create_yolo_labels(elements):
     
     # 1. Mappa classi
     classes = {}
-    class_id = 0
+    # class_id = 0
+    class_id = 1
     for element in elements:
         for tag in element.tags:
             if tag['name'] not in classes:
                 classes[tag['name']] = class_id
-                class_id += 1
+                # class_id += 1
     
     print("Classi:", classes)
     
