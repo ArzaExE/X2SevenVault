@@ -1,5 +1,0 @@
-path: C:\Users\yku197\X2SevenVault\5_Applicativo\ImageGenerator\data_generate\result\20260224_094331
-train: images/train
-val: images/val
-nc: 10
-names: ['helmet', 'eletric_socket', 'airpods', 'bottle', 'dino', 'micro', 'pencil_case', 'vr', 'SSD', 'glove']

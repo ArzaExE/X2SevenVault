@@ -37,7 +37,7 @@ BACKGROUNDS_PATTERN = os.path.join(os.getcwd(), "data_generate", "backgrounds", 
 
 # Data - path for objects images
 # TODO: Create class selection
-OBJECTS_PATTERN = os.path.join(os.getcwd(), "data_generate", "objects", "bottle", "**", "*")
+OBJECTS_PATTERN = os.path.join(os.getcwd(), "data_generate", "first_generation", "airpods", "**", "*")
 
 # current now date to create the result folder name for output images
 DATE = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -46,7 +46,7 @@ DATE = datetime.now().strftime("%Y%m%d_%H%M%S")
 OUT_DIR = os.path.join(os.getcwd(), "data_generate", "result", DATE)
 
 #Create classes array
-CLASSES_PATTERN = os.path.join(os.getcwd(), "data_generate", "objects", "**")
+CLASSES_PATTERN = os.path.join(os.getcwd(), "data_generate", "first_generation", "**")
 
 # Object randomization
 # number of objects for full image
