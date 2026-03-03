@@ -37,7 +37,7 @@ BACKGROUNDS_PATTERN = os.path.join(os.getcwd(), "data_generate", "backgrounds", 
 
 # Data - path for objects images
 # TODO: Create class selection
-OBJECTS_PATTERN = os.path.join(os.getcwd(), "data_generate", "first_generation", "airpods", "**", "*")
+OBJECTS_PATTERN = os.path.join(os.getcwd(), "data_generate", "first_generation", "micro", "**", "*")
 
 # current now date to create the result folder name for output images
 DATE = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -217,7 +217,7 @@ def create_yolo_labels(elements):
     # 1. Mappa classi
     classes = {}
     # class_id = 0
-    class_id = 1
+    class_id = 4
     for element in elements:
         for tag in element.tags:
             if tag['name'] not in classes:
@@ -287,6 +287,31 @@ names: {list(classes.keys())}
     print(f"✅ Train: {train_files} img+txt, Val: {val_files} img+txt spostati!")
     return classes
 
+def crea_label_vuote_per_backgrounds(backgrounds_dir):
+    """
+    Per ogni immagine in backgrounds_dir crea un .txt vuoto
+    con lo stesso nome (senza estensione).
+    """
+    # estensioni immagini che consideri
+    estensioni = ("*.jpg", "*.jpeg", "*.png")
 
-create_out_dir()
-setup_environment(OBJECTS_PATTERN, BACKGROUNDS_PATTERN, N_SAMPLES, CLASSES_PATTERN)
+    # raccogli tutte le immagini
+    immagini = []
+    for ext in estensioni:
+        immagini.extend(glob(os.path.join(backgrounds_dir, ext)))
+
+    print(f"Trovate {len(immagini)} immagini in {backgrounds_dir}")
+
+    for img_path in immagini:
+        base = os.path.splitext(os.path.basename(img_path))[0]  # uuid senza estensione
+        txt_path = os.path.join(backgrounds_dir, base + ".txt")
+        # crea file vuoto (sovrascrive se esiste)
+        open(txt_path, "w").close()
+
+    print("File di testo vuoti creati.")
+
+
+# create_out_dir()
+# setup_environment(OBJECTS_PATTERN, BACKGROUNDS_PATTERN, N_SAMPLES, CLASSES_PATTERN)
+
+crea_label_vuote_per_backgrounds(os.path.join(os.getcwd(), "backgrounds", "val"))
