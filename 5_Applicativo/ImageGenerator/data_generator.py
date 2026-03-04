@@ -152,10 +152,8 @@ def create_element(objects_paths, backgrounds_paths, classes_names):
                 x_min=0.05, y_min=0.05, x_max=0.7, y_max=0.7, mode='percentage'
             ),
             flip.transformers.domain_randomization.Draw(),
-            flip.transformers.labeler.CreateBoundingBoxes(),
-            # flip.transformers.labeler.CreateMasks(classes_names), 
+            flip.transformers.labeler.CreateBoundingBoxes(), 
             flip.transformers.io.SaveImage(OUT_DIR, name),
-            # flip.transformers.io.SaveMask(OUT_DIR, name)
        ]
     )
 
@@ -226,7 +224,6 @@ def create_yolo_labels(elements):
     
     print("Classi:", classes)
     
-    # 2. Crea struttura YOLO
     os.makedirs(os.path.join(OUT_DIR, "images/train"), exist_ok=True)
     os.makedirs(os.path.join(OUT_DIR, "images/val"), exist_ok=True)
     os.makedirs(os.path.join(OUT_DIR, "labels/train"), exist_ok=True)
@@ -241,11 +238,9 @@ def create_yolo_labels(elements):
     for i, element in enumerate(elements):
         img_name = str(element.name) if isinstance(element.name, uuid.UUID) else str(element.name).replace('.jpg', '')
         
-        # Salta se nessun oggetto
         if len(element.tags) == 0:
             continue
             
-        # File immagine Flip (già con oggetti)
         img_src = os.path.join(OUT_DIR, f"{img_name}.jpg")
         
         if i < train_count:
@@ -255,12 +250,10 @@ def create_yolo_labels(elements):
             split_dir = 'val'
             val_files += 1
         
-        # ✅ SPOSTA immagine nella cartella corretta
         img_dst = os.path.join(OUT_DIR, f"images/{split_dir}/{img_name}.jpg")
         if os.path.exists(img_src):
             shutil.move(img_src, img_dst)
         
-        # ✅ Crea label .txt
         bh, bw = element.image.shape[0], element.image.shape[1]
         label_path = os.path.join(OUT_DIR, f"labels/{split_dir}/{img_name}.txt")
         
@@ -274,7 +267,6 @@ def create_yolo_labels(elements):
                 w, h = x2 - x1, y2 - y1
                 f.write(f"{classes[tag['name']]} {round(cx,6)} {round(cy,6)} {round(w,6)} {round(h,6)}\n")
     
-    # 4. data.yaml
     data_yaml = f"""path: '/content/gdrive/My Drive/X2SevenVault/'
 train: data/images/train
 val: data/images/val
@@ -284,7 +276,6 @@ names: {list(classes.keys())}
     with open(os.path.join(OUT_DIR, "data.yaml"), 'w') as f:
         f.write(data_yaml)
     
-    print(f"✅ Train: {train_files} img+txt, Val: {val_files} img+txt spostati!")
     return classes
 
 def crea_label_vuote_per_backgrounds(backgrounds_dir):
