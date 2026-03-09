@@ -1,0 +1,9 @@
+1_QdC/
+2_Abstract/
+3_Documentazione/
+4_Diari/
+5_Applicativo/ImageGenerator/
+5_Applicativo/Training/
+6_Allegati/
+# Escludi tutto il resto non necessario
+node_modules/
