@@ -1,0 +1,1 @@
+declare module '@sheehanmunim/react-native-ffmpeg';
