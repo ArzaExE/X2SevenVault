@@ -1,123 +1,107 @@
-import { Audio } from 'expo-av';
-import { CameraView, useCameraPermissions } from "expo-camera";
-import * as FileSystem from 'expo-file-system/legacy';
-import { useEffect, useRef, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
-import Button from "../../components/Button";
-
-const SCANS_DIR = FileSystem.documentDirectory + 'scans/';
-const RECORD_DURATION = 10000;
+import React, { useEffect, useRef, useState } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { runOnJS, useSharedValue } from 'react-native-reanimated';
+import type { Frame } from 'react-native-vision-camera';
+import { Camera, useCameraDevice, useCameraFormat, useCameraPermission, useFrameProcessor } from 'react-native-vision-camera';
+import Button from '../../components/Button';
+import useTFLite from '../../hooks/useTFLite';
 
 export default function ScannerScreen() {
-  const cameraRef = useRef<CameraView>(null);
-  const timerRef = useRef(0);
-  const [isRecording, setIsRecording] = useState(false);
-  const [permission, requestPermission] = useCameraPermissions()
+  const cameraRef = useRef<Camera>(null);
+  const device = useCameraDevice('back'); // ✅ Fix: useCameraDevice invece di useCameraDevices().back
+  const format = useCameraFormat(device, [
+    { fps: 30 }
+  ]); // ✅ Fix: useCameraFormat per selezionare il formato con 2 FPS
+  const frameCount = useSharedValue(0);
+
+  const { model, LABELS, THRESHOLD } = useTFLite();
+  const [detections, setDetections] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const { hasPermission, requestPermission } = useCameraPermission(); // ✅ Fix: useCameraPermission invece di useCameraPermissions
 
   useEffect(() => {
     requestPermission();
-    Audio.requestPermissionsAsync();
-    FileSystem.makeDirectoryAsync(SCANS_DIR, { intermediates: true });
   }, []);
 
-  if (!permission?.granted) {
+
+const processFrame = async (buffer: number[]) => {
+  if (!model) return;
+
+  const tensor = new Uint8Array(buffer);
+  const outputs = await model.run([tensor]); // ✅ await su JS thread
+
+  console.log('outputs[0] (boxes):', Array.from(outputs[0] ?? []));
+  console.log('outputs[1] (scores):', Array.from(outputs[1] ?? []));
+  console.log('outputs[2] (classes):', Array.from(outputs[2] ?? []));
+
+  const det = parseYOLO(outputs, LABELS, THRESHOLD);
+  setDetections(det);
+};
+
+const frameProcessor = useFrameProcessor((frame: Frame) => {
+  'worklet';
+
+  frameCount.value = (frameCount.value + 1) % 15;
+  if (frameCount.value !== 0) return;
+
+  // ✅ Converti il buffer in plain array e passa tutto a JS thread
+  const buffer = frame.toArrayBuffer();
+  const plainArray = Array.from(new Uint8Array(buffer));
+  runOnJS(processFrame)(plainArray);
+
+}, [frameCount]);
+
+  if (!device || !hasPermission) { // ✅ Fix: hasPermission invece di permission
     return (
       <View style={styles.center}>
-        <Text>No camera permission</Text>
+        <Text>No camera permission or device</Text>
       </View>
-    )
-  }
-
-  // const startRecording = async (): Promise<string | undefined> => {
-  //   if (!cameraRef.current || isRecording) return;
-
-  //   setIsRecording(true);
-
-  //   // Stop automatico dopo 5 secondi
-  //   timerRef.current = setTimeout(() => stopRecording(), RECORD_DURATION);
-
-  //   try {
-  //     const video = await cameraRef.current.recordAsync();
-  //     if (!video) return;
-  //     const destUri = await saveVideo(video.uri);
-  //     return destUri;
-  //   } catch (err) {
-  //     console.error('Errore registrazione:', err);
-  //   } finally {
-  //     setIsRecording(false);
-  //   }
-  // };
-  
-  // const stopRecording = () => {
-  //   clearTimeout(timerRef.current);
-  //   cameraRef.current?.stopRecording();
-  // };
-
-  // const saveVideo = async (tempUri: string): Promise<string> =>  {
-  //   const destUri = SCANS_DIR + `scan_${Date.now()}.mp4`;
-  //   await FileSystem.moveAsync({ from: tempUri, to: destUri });
-  //   return destUri;
-  // };
-
-  // const extractFrames = async (videoUri: string) => {
-  //   const outputDir = SCANS_DIR + 'frames/';
-  //   await FileSystem.makeDirectoryAsync(outputDir, { intermediates: true });
-
-  //   // Estrai 1 frame ogni secondo
-  //   await FFmpegKit.execute(
-  //     `-i ${videoUri} -vf fps=1 ${outputDir}frame_%03d.jpg`
-  //   );
-
-  //   const frames = await FileSystem.readDirectoryAsync(outputDir);
-  //   console.log('Frame estratti:', frames);
-  // };
-
-  const takePhoto = async () => {
-    if (!cameraRef.current) return;
-
-    const photo = await cameraRef.current.takePictureAsync();
-    if (!photo) return;
-
-    const destUri = SCANS_DIR + `scan_${Date.now()}.jpg`;
-    await FileSystem.moveAsync({ from: photo.uri, to: destUri });
-    console.log('Foto salvata:', destUri);
-  };
-
- function scan() {
-    takePhoto();
-    // await extractFrames(scanUri);
-    // router.push({
-    //   pathname: "../object-details",
-    //   // params: { code: "WH-BOX-3921" }
-    // })
+    );
   }
 
   return (
     <View style={styles.container}>
-      <CameraView ref={cameraRef} style={styles.camera} facing="back" mode="picture" />
-      {/* <CameraView style={styles.camera} /> */}
+      <Camera
+        ref={cameraRef}
+        style={StyleSheet.absoluteFill}
+        device={device}
+        isActive={true}
+        frameProcessor={frameProcessor}
+        format={format}   // ✅ aggiunto
+      />
+
+      {detections.length > 0 && (
+        <View style={styles.overlay}>
+          {detections.map((d, i) => (
+            <Text key={i} style={styles.detectionText}>
+              {d.label} — {(d.confidence * 100).toFixed(1)}%
+            </Text>
+          ))}
+        </View>
+      )}
 
       <View style={styles.controls}>
-        <Button title="Object Scan" onPress={scan} />
+        <Button
+          title={loading ? 'Analisi in corso...' : 'Object Scan'}
+          onPress={() => console.log('Scanner attivo')}
+        />
       </View>
-
     </View>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1
+  container: { flex: 1 },
+  overlay: {
+    position: 'absolute',
+    top: 40,
+    left: 16,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    padding: 10,
+    borderRadius: 8,
   },
-  camera: {
-    flex: 1
-  },
-  controls: {
-    padding: 20
-  },
-  center: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center"
-  }
-})
+  detectionText: { color: '#fff', fontSize: 16, marginBottom: 4 },
+  controls: { position: 'absolute', bottom: 30, width: '100%', paddingHorizontal: 20 },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+});

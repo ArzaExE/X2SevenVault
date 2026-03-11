@@ -29,10 +29,12 @@
     },
     "plugins": [
       "expo-router",
+      "react-native-vision-camera",
+      "react-native-fast-tflite",
       [
         "expo-camera",
         {
-          "cameraPermission": "Accesso alla camera per registrare video",
+          "cameraPermission": "Allow camera access for object detection",
           "microphonePermission": "Accesso al microfono per registrare video",
           "recordAudioAndroid": true
         }
