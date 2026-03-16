@@ -1,4 +1,0 @@
-# Blocca qualsiasi tentativo di risalire le cartelle
-../
-**/node_modules
-.git/
