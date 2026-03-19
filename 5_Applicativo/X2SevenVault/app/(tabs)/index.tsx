@@ -1,9 +1,9 @@
-import { getItems } from "@/lib/services/itemService";
+import { getItems } from "@/lib/firestore";
 import ExpoYolo from "@/modules/expo-yolo";
 import { Ionicons } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
