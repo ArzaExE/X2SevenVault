@@ -6,16 +6,17 @@ workflows:
       xcode: 16.2
       node: 18
       cocoapods: default
-    working_directory: 5_Applicativo/X2SevenVault
     scripts:
       - name: Install dependencies
         script: |
+          cd 5_Applicativo/X2SevenVault
           npm install
       - name: Install CocoaPods
         script: |
-          cd ios && pod install
+          cd 5_Applicativo/X2SevenVault/ios && pod install
       - name: Build iOS
         script: |
+          cd 5_Applicativo/X2SevenVault
           xcodebuild \
             -workspace ios/X2SevenVault.xcworkspace \
             -scheme X2SevenVault \
