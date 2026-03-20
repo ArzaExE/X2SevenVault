@@ -1,0 +1,25 @@
+workflows:
+  react-native-ios:
+    name: React Native iOS
+    max_build_duration: 60
+    environment:
+      xcode: 16.2
+      node: 18
+      cocoapods: default
+    scripts:
+      - name: Install dependencies
+        script: |
+          npm install
+      - name: Install CocoaPods
+        script: |
+          cd ios && pod install
+      - name: Build iOS
+        script: |
+          xcodebuild \
+            -workspace ios/X2SevenVault.xcworkspace \
+            -scheme X2SevenVault \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -derivedDataPath build
+    artifacts:
+      - build/Build/Products/**/*.app
