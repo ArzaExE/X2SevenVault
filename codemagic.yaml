@@ -25,9 +25,8 @@ workflows:
             -workspace ios/X2SevenVault.xcworkspace \
             -scheme X2SevenVault \
             -configuration Debug \
-            -sdk iphonesimulator \
+            -sdk iphoneos \
             -derivedDataPath build \
-            EXCLUDED_ARCHS=x86_64 \
-            ONLY_ACTIVE_ARCH=NO
+            CODE_SIGNING_ALLOWED=NO
     artifacts:
       - 5_Applicativo/X2SevenVault/build/Build/Products/**/*.app
