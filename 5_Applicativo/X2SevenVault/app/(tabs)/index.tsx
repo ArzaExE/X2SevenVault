@@ -1,4 +1,3 @@
-import { getItems } from "@/lib/firestore";
 import ExpoYolo from "@/modules/expo-yolo";
 import { Ionicons } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
@@ -15,10 +14,10 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const LABELS = ["airpods", "bottle", "eletric_socket", "helmet", "micro"];
-const NUM_BOXES = 8400;
-const THRESHOLD = 0.7;
-const IOU_THRESHOLD = 0.45;
+const LABELS = process.env.EXPO_PUBLIC_LABELS?.split(",") ?? [];
+const NUM_BOXES = Number(process.env.EXPO_PUBLIC_NUM_BOXES);
+const THRESHOLD = Number(process.env.EXPO_PUBLIC_THRESHOLD)
+const IOU_THRESHOLD = Number(process.env.EXPO_PUBLIC_IOU_THRESHOLD);
 
 interface Detection {
   classId: string;
@@ -62,7 +61,6 @@ function nms(detections: Detection[]): Detection[] {
 
 export default function HomeScreen() {
   const [permission, requestPermission] = useCameraPermissions();
-  const [facing, setFacing] = useState<"back" | "front">("back");
   const [isProcessing, setIsProcessing] = useState(false);
   const cameraRef = useRef<CameraView>(null);
   const router = useRouter();
@@ -70,14 +68,7 @@ export default function HomeScreen() {
   const interpreterInitialized = useRef(false);
 
   useEffect(() => {
-    getItems().then(items => {
-      console.log("Items in magazzino:", items);
-    }).catch(e => {
-      console.error("Errore fetching items:", e);
-    });
-    console.log("[YOLO] HomeScreen montato");
     return () => {
-      console.log("[YOLO] HomeScreen smontato — chiudo interpreter");
       ExpoYolo.closeInterpreter();
     };
   }, []);
@@ -92,10 +83,8 @@ export default function HomeScreen() {
       });
       if (!photo?.uri) return;
 
-      console.log("[YOLO] Avvio inferenza su:", photo.uri);
       interpreterInitialized.current = true;
       const result = await ExpoYolo.performInference(photo.uri);
-      console.log("[YOLO] Output grezzo — lunghezza array:", result.length);
 
       const raw: Detection[] = [];
 
@@ -117,10 +106,6 @@ export default function HomeScreen() {
 
         if (maxScore < THRESHOLD) continue;
 
-        console.log(
-          `[YOLO] Box candidato — classe: ${LABELS[maxClass]}, score: ${maxScore.toFixed(3)}`
-        );
-
         raw.push({
           classId: LABELS[maxClass],
           confidence: maxScore,
@@ -131,30 +116,18 @@ export default function HomeScreen() {
         });
       }
 
-      console.log("[YOLO] Box prima di NMS:", raw.length);
       const filtered = nms(raw);
-      console.log("[YOLO] Box dopo NMS:", filtered.length);
-      filtered.forEach((d, i) =>
-        console.log(
-          `[YOLO] Rilevamento #${i + 1} — ${d.classId} ${(d.confidence * 100).toFixed(1)}%`
-        )
-      );
 
       if (filtered.length === 0) {
-        console.log("[YOLO] Nessun oggetto sopra soglia", THRESHOLD);
         Alert.alert(
           "Nessun oggetto rilevato",
-          "Prova a inquadrare meglio l'oggetto."
+          "Prova a inquadrare meglio l'oggetto e posiziona la fotocamera non troppo vicino all'oggetto"
         );
         return;
       }
 
       // Prende il rilevamento con confidence più alta
       const best = filtered[0];
-      console.log(
-        `[YOLO] Best detection: ${best.classId} @ ${(best.confidence * 100).toFixed(1)}%`
-      );
-
       // Naviga al modal passando i dati come query params
       router.push({
         pathname: "/modal",
@@ -165,17 +138,11 @@ export default function HomeScreen() {
         },
       });
     } catch (e) {
-      console.error("[YOLO] Errore durante la detection:", e);
       Alert.alert("Errore", "Impossibile eseguire la detection.");
     } finally {
-      console.log("[YOLO] Detection completata, processing = false");
       setIsProcessing(false);
     }
   };
-
-  // const toggleCamera = () => {
-  //   setFacing((prev) => (prev === "back" ? "front" : "back"));
-  // };
 
   if (!permission) {
     return (
@@ -222,7 +189,6 @@ export default function HomeScreen() {
         <CameraView
           ref={cameraRef}
           style={StyleSheet.absoluteFill}
-          facing={facing}
         />
 
         {/* Processing overlay */}

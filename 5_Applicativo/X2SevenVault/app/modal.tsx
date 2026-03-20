@@ -1,7 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Animated,
   Pressable,
   ScrollView,
@@ -11,88 +12,14 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-// Dati statici per ogni classe rilevabile
-const ITEM_DATA: Record<string, {
-  label: string;
-  sku: string;
-  description: string;
-  warehouse: string;
-  shelfLocation: string;
-  zone: string;
-  level: string;
-  weight: string;
-  height: string;
-  width: string;
-}> = {
-  airpods: {
-    label: "Apple AirPods",
-    sku: "ELC-APL-APODS-001",
-    description: "Auricolari wireless Apple AirPods con custodia di ricarica. Compatibili con tutti i dispositivi Apple via Bluetooth 5.0.",
-    warehouse: "Warehouse A",
-    shelfLocation: "A-03-1B",
-    zone: "A-03",
-    level: "1B",
-    weight: "0.04 kg",
-    height: "6 cm",
-    width: "5 cm",
-  },
-  bottle: {
-    label: "Water Bottle",
-    sku: "GEN-BTL-500ML-002",
-    description: "Bottiglia d'acqua riutilizzabile in acciaio inossidabile da 500ml. Mantiene la temperatura per 12 ore.",
-    warehouse: "Warehouse C",
-    shelfLocation: "C-12-2A",
-    zone: "C-12",
-    level: "2A",
-    weight: "0.25 kg",
-    height: "22 cm",
-    width: "7 cm",
-  },
-  eletric_socket: {
-    label: "Electric Socket",
-    sku: "ELC-SCK-EU-003",
-    description: "Presa elettrica europea standard 220V/16A con protezione bambini e certificazione CE.",
-    warehouse: "Warehouse B",
-    shelfLocation: "B-07-3C",
-    zone: "B-07",
-    level: "3C",
-    weight: "0.12 kg",
-    height: "8 cm",
-    width: "8 cm",
-  },
-  helmet: {
-    label: "Safety Helmet",
-    sku: "SAF-HLM-CE-004",
-    description: "Casco di sicurezza industriale certificato CE EN397. Protezione contro impatti e oggetti in caduta.",
-    warehouse: "Warehouse D",
-    shelfLocation: "D-02-1A",
-    zone: "D-02",
-    level: "1A",
-    weight: "0.45 kg",
-    height: "22 cm",
-    width: "28 cm",
-  },
-  micro: {
-    label: "Microphone",
-    sku: "AUD-MIC-USB-005",
-    description: "Microfono USB da studio con diaframma condensatore. Risposta in frequenza 20Hz-20kHz.",
-    warehouse: "Warehouse A",
-    shelfLocation: "A-09-2B",
-    zone: "A-09",
-    level: "2B",
-    weight: "0.52 kg",
-    height: "18 cm",
-    width: "5 cm",
-  },
-};
+import { getCompleteData } from "../lib/firestore";
 
 const FALLBACK = {
-  label: "Unknown Object",
-  sku: "N/A",
+  name: "Unknown Object",
+  item_id: "N/A",
   description: "Oggetto non presente nel catalogo.",
-  warehouse: "N/A",
-  shelfLocation: "N/A",
+  warehouse_id: "N/A",
+  shelf_location: "N/A",
   zone: "N/A",
   level: "N/A",
   weight: "N/A",
@@ -107,10 +34,11 @@ export default function ModalScreen() {
     confidence: string;
   }>();
 
-  const confidenceValue = parseFloat(confidence ?? "0");
-  const item = ITEM_DATA[classId ?? ""] ?? FALLBACK;
+  const [item, setItem] = useState<any>(null);
+  const [warehouse, setWarehouse] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Animazione progress bar
+  const confidenceValue = parseFloat(confidence ?? "0");
   const progressAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -119,12 +47,40 @@ export default function ModalScreen() {
       duration: 900,
       useNativeDriver: false,
     }).start();
-  }, [confidenceValue]);
+
+    getCompleteData(classId)
+      .then(({ item, warehouse }) => {
+        if (!item) return setItem(FALLBACK);
+        setItem(item);
+        setWarehouse(warehouse);
+      })
+      .catch(() => setItem(FALLBACK))
+      .finally(() => setLoading(false));
+  }, [confidenceValue, classId]);
 
   const progressWidth = progressAnim.interpolate({
     inputRange: [0, 1],
     outputRange: ["0%", "100%"],
   });
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+        <StatusBar barStyle="light-content" backgroundColor="#0D1117" />
+        <View style={styles.header}>
+          <Pressable style={styles.backBtn} onPress={() => router.back()}>
+            <Ionicons name="chevron-back" size={20} color="#E2E8F0" />
+          </Pressable>
+          <View style={styles.headerIcon}>
+            <Ionicons name="cube-outline" size={20} color="#00D4E8" />
+          </View>
+        </View>
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+          <ActivityIndicator color="#00D4E8" size="large" />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
@@ -152,8 +108,8 @@ export default function ModalScreen() {
               <Ionicons name="cube-outline" size={24} color="#00D4E8" />
             </View>
             <View style={styles.itemTitles}>
-              <Text style={styles.itemName}>{item.label}</Text>
-              <Text style={styles.itemSku}>SKU: {item.sku}</Text>
+              <Text style={styles.itemName}>{item?.name}</Text>
+              <Text style={styles.itemSku}>SKU: {item?.item_id}</Text>
             </View>
           </View>
 
@@ -183,7 +139,7 @@ export default function ModalScreen() {
               <Ionicons name="document-text-outline" size={13} color="#4A5568" />
               <Text style={styles.descriptionLabel}>DESCRIPTION</Text>
             </View>
-            <Text style={styles.descriptionText}>{item.description}</Text>
+            <Text style={styles.descriptionText}>{item?.description}</Text>
           </View>
         </View>
 
@@ -201,7 +157,9 @@ export default function ModalScreen() {
             </View>
             <View>
               <Text style={styles.locationRowLabel}>WAREHOUSE</Text>
-              <Text style={styles.locationRowValue}>{item.warehouse}</Text>
+              <Text style={styles.locationRowValue}>
+                {warehouse?.name ?? "N/A"}
+              </Text>
             </View>
           </View>
 
@@ -212,7 +170,9 @@ export default function ModalScreen() {
             </View>
             <View style={styles.locationRowContent}>
               <Text style={styles.locationRowLabel}>EXACT SHELF LOCATION</Text>
-              <Text style={styles.locationRowValueLarge}>{item.shelfLocation}</Text>
+              <Text style={styles.locationRowValueLarge}>
+                {item?.shelf_id.replace(/_/g, " ") ?? "N/A"}
+              </Text>
             </View>
             <View style={styles.activeDot} />
           </View>
@@ -220,13 +180,18 @@ export default function ModalScreen() {
           {/* Zone + Level */}
           <View style={styles.zoneRow}>
             <View style={styles.zoneBox}>
-              <Text style={styles.zoneLabel}>ZONE</Text>
-              <Text style={styles.zoneValue}>{item.zone}</Text>
+              <Text style={styles.zoneLabel}>AISLE</Text>
+              <Text style={styles.zoneValue}>{item?.aisle_id ?? "N/A"}</Text>
             </View>
             <View style={styles.zoneDivider} />
             <View style={styles.zoneBox}>
-              <Text style={styles.zoneLabel}>LEVEL</Text>
-              <Text style={styles.zoneValue}>{item.level}</Text>
+              <Text style={styles.zoneLabel}>SHELF</Text>
+              <Text style={styles.zoneValue}>{item?.shelf_id?.split("_").slice(1).join(" ") ?? "N/A"}</Text>
+            </View>
+            <View style={styles.zoneDivider} />
+            <View style={styles.zoneBox}>
+              <Text style={styles.zoneLabel}>QUANTITY</Text>
+              <Text style={styles.zoneValue}>{item?.quantity ?? "N/A"}</Text>
             </View>
           </View>
         </View>
@@ -239,16 +204,18 @@ export default function ModalScreen() {
           </View>
 
           {[
-            { label: "Weight", value: item.weight },
-            { label: "Height", value: item.height },
-            { label: "Width", value: item.width },
+            { label: "Weight", value: item?.physical_properties?.weight?.value, unit: item?.physical_properties?.weight?.unit },
+            { label: "Height", value: item?.physical_properties?.height?.value, unit: item?.physical_properties?.height?.unit },
+            { label: "Width",  value: item?.physical_properties?.width?.value,  unit: item?.physical_properties?.width?.unit  },
           ].map((row, i, arr) => (
             <View key={row.label}>
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>{row.label}</Text>
-                <Text style={styles.infoValue}>{row.value}</Text>
+                <Text style={styles.infoValue}>
+                  {row.value != null ? `${row.value}${row.unit ? ` ${row.unit}` : ""}` : "N/A"}
+                </Text>
               </View>
-              {i < arr.length - 1 && <View style={styles.divider} />}
+              {i < arr.length - 1 ? <View style={styles.divider} /> : null}
             </View>
           ))}
         </View>
