@@ -6,6 +6,7 @@ workflows:
       xcode: 16.2
       node: 18
       cocoapods: default
+    working_directory: 5_Applicativo/X2SevenVault
     scripts:
       - name: Install dependencies
         script: |
@@ -22,4 +23,4 @@ workflows:
             -sdk iphonesimulator \
             -derivedDataPath build
     artifacts:
-      - build/Build/Products/**/*.app
+      - 5_Applicativo/X2SevenVault/build/Build/Products/**/*.app
