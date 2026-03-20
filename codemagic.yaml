@@ -7,6 +7,10 @@ workflows:
       node: 18
       cocoapods: default
     scripts:
+      - name: Debug struttura cartelle
+        script: |
+          echo "PWD: $(pwd)"
+          find . -maxdepth 4 -type d
       - name: Install dependencies
         script: |
           cd 5_Applicativo/X2SevenVault
