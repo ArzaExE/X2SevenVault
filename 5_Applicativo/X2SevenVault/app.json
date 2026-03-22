@@ -7,7 +7,7 @@
     "icon": "./assets/images/icon.png",
     "scheme": "x2sevenvault",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "ios": {
       "supportsTablet": true,
       "googleServicesFile": "./GoogleService-Info.plist",

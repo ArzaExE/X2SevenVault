@@ -32,13 +32,17 @@ workflows:
                 if config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'].to_f < 13.0
                   config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
                 end
+                # Fix gRPC-C++ con Xcode 16
+                if target.name == 'gRPC-C++'
+                  config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
+                end
               end
             end
           """
           content = content.replace("post_install do |installer|", "post_install do |installer|" + fix, 1)
-              
+          
           with open("Podfile", "w") as f:
-            f.write(content)
+              f.write(content)
           PYEOF
 
       - name: Install CocoaPods
