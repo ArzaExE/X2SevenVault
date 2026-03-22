@@ -3,7 +3,7 @@ workflows:
     name: React Native iOS Simulator
     max_build_duration: 60
     environment:
-      xcode: 14.2
+      xcode: 16.2
       node: 18
       cocoapods: default
 
@@ -37,7 +37,7 @@ workflows:
             -scheme X2SevenVault \
             -configuration Debug \
             -sdk iphonesimulator \
-            -destination 'platform=iOS Simulator,name=iPhone 14,OS=latest' \
+            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
             -derivedDataPath build \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
