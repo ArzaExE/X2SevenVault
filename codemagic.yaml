@@ -18,6 +18,12 @@ workflows:
           cd 5_Applicativo/X2SevenVault
           npx expo prebuild --platform ios --clean
 
+      - name: Fix Podfile per Firebase
+        script: |
+          cd 5_Applicativo/X2SevenVault/ios
+          # Aggiunge use_modular_headers! dopo la prima riga del Podfile
+          sed -i '' '1s/^/use_modular_headers!\n/' Podfile
+
       - name: Install CocoaPods
         script: |
           cd 5_Applicativo/X2SevenVault/ios
