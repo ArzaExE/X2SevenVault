@@ -50,5 +50,5 @@ workflows:
           find 5_Applicativo/X2SevenVault/build -name "*.ipa"
 
     artifacts:
-      - 5_Applicativo/X2SevenVault/build/**/*.app
-      - 5_Applicativo/X2SevenVault/build/**/*.app/**
+      - 5_Applicativo/X2SevenVault/build/Build/Products/Debug-iphonesimulator/X2SevenVault.app
+      - 5_Applicativo/X2SevenVault/build/Build/Products/Debug-iphonesimulator/X2SevenVault.app/**
