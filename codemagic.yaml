@@ -25,21 +25,24 @@ workflows:
           python3 << PYEOF
           with open("Podfile", "r") as f:
               content = f.read()
-          
+
+          # Sostituisci FirebaseFirestore con la versione precompilata (evita gRPC)
+          content = content.replace(
+              "config = use_native_modules!(config_command)",
+              "config = use_native_modules!(config_command)\n  pod 'FirebaseFirestore', :git => 'https://github.com/invertase/firestore-ios-sdk-frameworks.git', :tag => '11.6.0'"
+          )
+
           fix = """
             installer.pods_project.targets.each do |target|
               target.build_configurations.each do |config|
                 if config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'].to_f < 13.0
                   config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
                 end
-                if target.name == 'gRPC-C++'
-                  config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
-                end
               end
             end
           """
           content = content.replace("post_install do |installer|", "post_install do |installer|" + fix, 1)
-          
+
           with open("Podfile", "w") as f:
               f.write(content)
           PYEOF
