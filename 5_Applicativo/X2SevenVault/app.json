@@ -35,7 +35,6 @@
     },
     "plugins": [
       "expo-router",
-      "react-native-reanimated",
       "@react-native-firebase/app",
       [
         "react-native-vision-camera",
