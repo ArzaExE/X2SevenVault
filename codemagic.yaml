@@ -22,18 +22,20 @@ workflows:
         script: |
           cd 5_Applicativo/X2SevenVault/ios
           sed -i '' '1s/^/use_modular_headers!\n/' Podfile
-          cat >> Podfile << 'EOF'
-
-post_install do |installer|
-  installer.pods_project.targets.each do |target|
-    target.build_configurations.each do |config|
-      if config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'].to_f < 13.0
-        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
-      end
-    end
-  end
-end
-EOF
+          python3 << PYEOF
+          with open("Podfile", "a") as f:
+              f.write("""
+                post_install do |installer|
+                  installer.pods_project.targets.each do |target|
+                    target.build_configurations.each do |config|
+                      if config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'].to_f < 13.0
+                        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
+                      end
+                    end
+                  end
+                end
+              """)
+          PYEOF
 
       - name: Install CocoaPods
         script: |
@@ -52,8 +54,8 @@ EOF
             -derivedDataPath build \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO 2>&1 | tee build.log
-          echo "=== ULTIMI 50 RIGHE ==="
-          tail -50 build.log
+          echo "=== ULTIMI 100 RIGHE LOG ==="
+          tail -100 build.log
 
       - name: Zip e copia artifact
         script: |
