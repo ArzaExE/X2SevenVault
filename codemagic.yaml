@@ -3,7 +3,7 @@ workflows:
     name: React Native iOS Simulator
     max_build_duration: 60
     environment:
-      xcode: 16.2
+      xcode: 14.2
       node: 18
       cocoapods: default
 
@@ -37,11 +37,18 @@ workflows:
             -scheme X2SevenVault \
             -configuration Debug \
             -sdk iphonesimulator \
-            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
+            -destination 'platform=iOS Simulator,name=iPhone 14,OS=latest' \
             -derivedDataPath build \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             | xcpretty
 
+      - name: Debug artifacts
+        script: |
+          echo "=== Contenuto build ==="
+          find 5_Applicativo/X2SevenVault/build -name "*.app" -type d
+          find 5_Applicativo/X2SevenVault/build -name "*.ipa"
+
     artifacts:
-      - 5_Applicativo/X2SevenVault/build/Build/Products/Debug-iphonesimulator/X2SevenVault.app
+      - 5_Applicativo/X2SevenVault/build/**/*.app
+      - 5_Applicativo/X2SevenVault/build/**/*.app/**
