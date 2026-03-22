@@ -29,7 +29,7 @@ workflows:
           # Sostituisci FirebaseFirestore con la versione precompilata (evita gRPC)
           content = content.replace(
               "config = use_native_modules!(config_command)",
-              "config = use_native_modules!(config_command)\n  pod 'FirebaseFirestore', :git => 'https://github.com/invertase/firestore-ios-sdk-frameworks.git', :tag => '11.6.0'"
+              "config = use_native_modules!(config_command)\n  pod 'FirebaseFirestore', :git => 'https://github.com/invertase/firestore-ios-sdk-frameworks.git', :tag => '12.10.0'"
           )
 
           fix = """
