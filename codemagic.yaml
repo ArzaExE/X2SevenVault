@@ -13,6 +13,11 @@ workflows:
           cd 5_Applicativo/X2SevenVault
           npm install --legacy-peer-deps
 
+      - name: Verifica assets
+        script: |
+          echo "=== Assets ==="
+          ls -la 5_Applicativo/X2SevenVault/assets/images/
+
       - name: Expo Prebuild
         script: |
           cd 5_Applicativo/X2SevenVault
@@ -55,6 +60,7 @@ workflows:
       - name: Build iOS Simulator
         script: |
           cd 5_Applicativo/X2SevenVault
+          export ENVFILE=.env
           xcodebuild \
             -workspace ios/X2SevenVault.xcworkspace \
             -scheme X2SevenVault \
@@ -63,7 +69,10 @@ workflows:
             -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
             -derivedDataPath build \
             CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO 2>&1 | tee build.log
+            CODE_SIGNING_REQUIRED=NO \
+            SKIP_BUNDLING=NO \
+            BUNDLE_COMMAND="bundle" \
+            NODE_BINARY=$(which node) 2>&1 | tee build.log
           echo "=== ULTIMI 100 RIGHE LOG ==="
           tail -100 build.log
 
