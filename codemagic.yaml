@@ -18,10 +18,22 @@ workflows:
           cd 5_Applicativo/X2SevenVault
           npx expo prebuild --platform ios --clean
 
-      - name: Fix Podfile per Firebase
+      - name: Fix Podfile per Firebase e deployment target
         script: |
           cd 5_Applicativo/X2SevenVault/ios
           sed -i '' '1s/^/use_modular_headers!\n/' Podfile
+          cat >> Podfile << 'EOF'
+
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      if config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'].to_f < 13.0
+        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
+      end
+    end
+  end
+end
+EOF
 
       - name: Install CocoaPods
         script: |
@@ -40,24 +52,14 @@ workflows:
             -derivedDataPath build \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO 2>&1 | tee build.log
-          echo "=== ULTIMI 100 RIGHE LOG ==="
-          tail -100 build.log
+          echo "=== ULTIMI 50 RIGHE ==="
+          tail -50 build.log
 
       - name: Zip e copia artifact
         script: |
-          echo "=== CM_BUILD_DIR ==="
-          echo $CM_BUILD_DIR
-          echo "=== Contenuto .app ==="
-          ls -la 5_Applicativo/X2SevenVault/build/Build/Products/Debug-iphonesimulator/X2SevenVault.app
-          echo "=== Zip ==="
           cd 5_Applicativo/X2SevenVault/build/Build/Products/Debug-iphonesimulator
           zip -r X2SevenVault.zip X2SevenVault.app
-          echo "=== Dimensione zip ==="
-          ls -lh X2SevenVault.zip
-          echo "=== Copia in CM_BUILD_DIR ==="
           cp X2SevenVault.zip $CM_BUILD_DIR/X2SevenVault.zip
-          echo "=== Verifica copia ==="
-          ls -lh $CM_BUILD_DIR/X2SevenVault.zip
 
     artifacts:
       - X2SevenVault.zip
