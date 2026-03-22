@@ -44,9 +44,19 @@ workflows:
 
       - name: Zip e copia artifact
         script: |
+          echo "=== CM_BUILD_DIR ==="
+          echo $CM_BUILD_DIR
+          echo "=== Contenuto .app ==="
+          ls -la 5_Applicativo/X2SevenVault/build/Build/Products/Debug-iphonesimulator/X2SevenVault.app
+          echo "=== Zip ==="
           cd 5_Applicativo/X2SevenVault/build/Build/Products/Debug-iphonesimulator
           zip -r X2SevenVault.zip X2SevenVault.app
+          echo "=== Dimensione zip ==="
+          ls -lh X2SevenVault.zip
+          echo "=== Copia in CM_BUILD_DIR ==="
           cp X2SevenVault.zip $CM_BUILD_DIR/X2SevenVault.zip
+          echo "=== Verifica copia ==="
+          ls -lh $CM_BUILD_DIR/X2SevenVault.zip
 
     artifacts:
       - X2SevenVault.zip
