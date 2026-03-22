@@ -10,18 +10,17 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "bundleIdentifier": "ch.samt.x2sevenvault",
       "infoPlist": {
-        "NSCameraUsageDescription": "Accesso alla camera per il rilevamento oggetti"
-      },
-      "bundleIdentifier": "ch.samt.x2sevenvault"
+        "NSCameraUsageDescription": "Camera access is required for object detection"
+      }
     },
     "android": {
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#1a1a2e"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
@@ -36,29 +35,35 @@
     },
     "plugins": [
       "expo-router",
+      "react-native-reanimated",
       "@react-native-firebase/app",
       [
         "react-native-vision-camera",
         {
-          "cameraPermissionText": "Accesso alla camera per il rilevamento oggetti"
+          "cameraPermissionText": "Camera access is required for object detection",
+          "enableMicrophonePermission": false,
+          "enableCodeScanner": false
         }
       ],
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/images/adaptive-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff",
-          "dark": {
-            "backgroundColor": "#000000"
-          }
+          "backgroundColor": "#1a1a2e"
         }
       ]
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "dc3a0af7-ee14-49ef-bebb-84e4fe4b000d"
+      }
     }
   }
 }

@@ -17,7 +17,7 @@ import { getCompleteData } from "../lib/firestore";
 const FALLBACK = {
   name: "Unknown Object",
   item_id: "N/A",
-  description: "Oggetto non presente nel catalogo.",
+  description: "Object not found in the catalog.",
   warehouse_id: "N/A",
   shelf_location: "N/A",
   zone: "N/A",
@@ -101,7 +101,7 @@ export default function ModalScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Card 1 — Oggetto rilevato */}
+        {/* Card 1 — Detected Object */}
         <View style={styles.card}>
           <View style={styles.itemHeader}>
             <View style={styles.itemIcon}>
@@ -133,7 +133,7 @@ export default function ModalScreen() {
 
           <View style={styles.divider} />
 
-          {/* Descrizione */}
+          {/* Description */}
           <View style={styles.descriptionBlock}>
             <View style={styles.descriptionLabelRow}>
               <Ionicons name="document-text-outline" size={13} color="#4A5568" />

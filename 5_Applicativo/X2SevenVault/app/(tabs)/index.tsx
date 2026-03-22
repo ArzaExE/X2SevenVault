@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Image,
   Pressable,
   StatusBar,
   StyleSheet,
@@ -120,15 +121,13 @@ export default function HomeScreen() {
 
       if (filtered.length === 0) {
         Alert.alert(
-          "Nessun oggetto rilevato",
-          "Prova a inquadrare meglio l'oggetto e posiziona la fotocamera non troppo vicino all'oggetto"
+          "No object detected",
+          "Try to frame the object better and keep the camera at a reasonable distance."
         );
         return;
       }
 
-      // Prende il rilevamento con confidence più alta
       const best = filtered[0];
-      // Naviga al modal passando i dati come query params
       router.push({
         pathname: "/modal",
         params: {
@@ -138,7 +137,7 @@ export default function HomeScreen() {
         },
       });
     } catch (e) {
-      Alert.alert("Errore", "Impossibile eseguire la detection.");
+      Alert.alert("Error", "Unable to perform detection.");
     } finally {
       setIsProcessing(false);
     }
@@ -156,12 +155,12 @@ export default function HomeScreen() {
     return (
       <View style={styles.centered}>
         <Ionicons name="camera-outline" size={48} color="#00D4E8" />
-        <Text style={styles.permissionTitle}>Accesso fotocamera richiesto</Text>
+        <Text style={styles.permissionTitle}>Camera Access Required</Text>
         <Text style={styles.permissionSub}>
-          Per rilevare gli oggetti è necessario il permesso fotocamera.
+          Camera permission is required to detect objects.
         </Text>
         <Pressable style={styles.permissionBtn} onPress={requestPermission}>
-          <Text style={styles.permissionBtnText}>Concedi permesso</Text>
+          <Text style={styles.permissionBtnText}>Grant Permission</Text>
         </Pressable>
       </View>
     );
@@ -174,9 +173,11 @@ export default function HomeScreen() {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <View style={styles.headerIcon}>
-            <Ionicons name="scan-outline" size={20} color="#00D4E8" />
-          </View>
+          <Image
+            source={require("../../assets/images/adaptive-icon.png")}
+            style={{ width: 60, height: 60 }}
+            resizeMode="contain"
+          />
           <View>
             <Text style={styles.headerTitle}>X2SevenVault</Text>
             <Text style={styles.headerSub}>Smart Warehouse Scanner</Text>
@@ -195,7 +196,7 @@ export default function HomeScreen() {
         {isProcessing && (
           <View style={styles.processingOverlay}>
             <ActivityIndicator size="large" color="#00D4E8" />
-            <Text style={styles.processingText}>Analisi in corso...</Text>
+            <Text style={styles.processingText}>Analyzing...</Text>
           </View>
         )}
       </View>
@@ -213,10 +214,6 @@ export default function HomeScreen() {
         >
           <View style={styles.shutterInner} />
         </Pressable>
-
-        <View style={styles.cameraLabel}>
-          <Ionicons name="camera-outline" size={14} color="#718096" />
-        </View>
       </View>
     </SafeAreaView>
   );

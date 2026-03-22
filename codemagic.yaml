@@ -1,32 +1,69 @@
-workflows:
-  react-native-ios:
-    name: React Native iOS
-    max_build_duration: 60
-    environment:
-      xcode: 16.2
-      node: 18
-      cocoapods: default
-    scripts:
-      - name: Debug struttura cartelle
-        script: |
-          echo "PWD: $(pwd)"
-          find . -maxdepth 4 -type d
-      - name: Install dependencies
-        script: |
-          cd 5_Applicativo/X2SevenVault
-          npm install
-      - name: Install CocoaPods
-        script: |
-          cd 5_Applicativo/X2SevenVault/ios && pod install
-      - name: Build iOS
-        script: |
-          cd 5_Applicativo/X2SevenVault
-          xcodebuild \
-            -workspace ios/X2SevenVault.xcworkspace \
-            -scheme X2SevenVault \
-            -configuration Debug \
-            -sdk iphoneos \
-            -derivedDataPath build \
-            CODE_SIGNING_ALLOWED=NO
-    artifacts:
-      - 5_Applicativo/X2SevenVault/build/Build/Products/**/*.app
+{
+  "expo": {
+    "name": "X2SevenVault",
+    "slug": "x2sevenvault",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "x2sevenvault",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "bundleIdentifier": "ch.samt.x2sevenvault",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Camera access is required for object detection"
+      }
+    },
+    "android": {
+      "googleServicesFile": "./google-services.json",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#1a1a2e"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+      "package": "ch.samt.x2sevenvault",
+      "permissions": [
+        "android.permission.CAMERA"
+      ]
+    },
+    "web": {
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "react-native-reanimated",
+      "@react-native-firebase/app",
+      [
+        "react-native-vision-camera",
+        {
+          "cameraPermissionText": "Camera access is required for object detection",
+          "enableMicrophonePermission": false,
+          "enableCodeScanner": false
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/adaptive-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#1a1a2e"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "dc3a0af7-ee14-49ef-bebb-84e4fe4b000d"
+      }
+    }
+  }
+}

@@ -38,7 +38,6 @@ yarn-error.*
 app-example
 
 # generated native folders
-# /ios
+/ios
 /android
 modules/expo-yolo/android/build/*
-*.png
