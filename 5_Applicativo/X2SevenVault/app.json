@@ -4,7 +4,7 @@
     "slug": "x2sevenvault",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/logo.png",
     "scheme": "x2sevenvault",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,

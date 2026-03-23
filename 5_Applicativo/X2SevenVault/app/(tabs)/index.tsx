@@ -13,7 +13,7 @@ import {
   Text,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 const LABELS = process.env.EXPO_PUBLIC_LABELS?.split(",") ?? [];
 const NUM_BOXES = Number(process.env.EXPO_PUBLIC_NUM_BOXES);
@@ -67,6 +67,7 @@ export default function HomeScreen() {
   const router = useRouter();
 
   const interpreterInitialized = useRef(false);
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     return () => {
@@ -182,6 +183,12 @@ export default function HomeScreen() {
             <Text style={styles.headerTitle}>X2SevenVault</Text>
             <Text style={styles.headerSub}>Smart Warehouse Scanner</Text>
           </View>
+
+        </View>
+        <View style={styles.headerRight}>
+          <Pressable style={styles.headerBtn} onPress={() => router.push("/info")}>
+            <Ionicons name="information-circle-outline" size={20} color="#718096" />
+          </Pressable>
         </View>
       </View>
 
@@ -202,7 +209,7 @@ export default function HomeScreen() {
       </View>
 
       {/* Bottom bar */}
-      <View style={styles.bottomBar}>
+      <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 14 }]}>
         <Pressable
           style={({ pressed }) => [
             styles.shutterOuter,
@@ -266,6 +273,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#0D1117",
   },
   headerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  headerRight: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
