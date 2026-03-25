@@ -51,23 +51,16 @@ class FirestoreService
         return $results;
     }
 
-    public function createDocument(string $collection, array $data): string
+    public function setDocument(string $collection, string $id, array $data): void
     {
         $response = Http::withToken($this->token)
-            ->post("{$this->baseUrl}/{$collection}", [
-                'fields' => $this->encodeFields($data)
-            ]);
-
-        $name = $response->json()['name'];
-        return basename($name);
-    }
-
-    public function updateDocument(string $collection, string $id, array $data): void
-    {
-        Http::withToken($this->token)
             ->patch("{$this->baseUrl}/{$collection}/{$id}", [
                 'fields' => $this->encodeFields($data)
             ]);
+
+        if ($response->failed()) {
+            throw new \Exception('Error saving document: ' . $response->body());
+        }
     }
 
     public function deleteDocument(string $collection, string $id): void

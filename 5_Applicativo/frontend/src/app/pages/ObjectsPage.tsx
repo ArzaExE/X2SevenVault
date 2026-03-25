@@ -2,12 +2,16 @@ import { useState } from "react";
 import { DataTable } from "../components/DataTable";
 import { AddObjectDialog } from "../components/AddObjectDialog";
 import { useData } from "../data/store";
+import { useAuth } from "../context/AuthContext";
 import { Search, Plus } from "lucide-react";
 
 export function ObjectsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const { objects, addObject, deleteObject, warehouses } = useData();
+  const { user } = useAuth();
+  
+  const isGuest = user?.role === "Guest";
 
   const filteredObjects = objects.filter(
     (obj) =>
@@ -24,15 +28,19 @@ export function ObjectsPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-white text-2xl font-semibold">Objects Management</h1>
-            <p className="text-zinc-400 mt-1">Manage and organize your vault objects</p>
+            <p className="text-zinc-400 mt-1">
+              {isGuest ? "View vault objects (Read-only mode)" : "Manage and organize your vault objects"}
+            </p>
           </div>
-          <button
-            onClick={() => setIsAddDialogOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <Plus className="w-5 h-5" />
-            Add Object
-          </button>
+          {!isGuest && (
+            <button
+              onClick={() => setIsAddDialogOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <Plus className="w-5 h-5" />
+              Add Object
+            </button>
+          )}
         </div>
       </div>
 
@@ -77,15 +85,17 @@ export function ObjectsPage() {
         </div>
 
         {/* Data Table */}
-        <DataTable objects={filteredObjects} onDelete={deleteObject} />
+        <DataTable objects={filteredObjects} onDelete={deleteObject} isReadOnly={isGuest} />
       </div>
 
       {/* Add Object Dialog */}
-      <AddObjectDialog
-        isOpen={isAddDialogOpen}
-        onClose={() => setIsAddDialogOpen(false)}
-        onAdd={addObject}
-      />
+      {!isGuest && (
+        <AddObjectDialog
+          isOpen={isAddDialogOpen}
+          onClose={() => setIsAddDialogOpen(false)}
+          onAdd={addObject}
+        />
+      )}
     </>
   );
 }

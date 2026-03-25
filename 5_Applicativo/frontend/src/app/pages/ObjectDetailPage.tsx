@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from "react-router";
 import { useData } from "../data/store";
+import { useAuth } from "../context/AuthContext";
 import { ArrowLeft, Package, MapPin, Layers, Weight, Ruler, Maximize, Bot, Edit, Hash } from "lucide-react";
 import { useState } from "react";
 
@@ -7,8 +8,10 @@ export function ObjectDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { getObject, updateObject } = useData();
+  const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
 
+  const isGuest = user?.role === "Guest";
   const object = getObject(id || "");
 
   const [editForm, setEditForm] = useState({
@@ -80,7 +83,9 @@ export function ObjectDetailPage() {
             ) : (
               <h1 className="text-white text-2xl font-semibold">{object.name}</h1>
             )}
-            <p className="text-zinc-400 mt-1">Object Details</p>
+            <p className="text-zinc-400 mt-1">
+              {isGuest ? "Object Details (Read-only)" : "Object Details"}
+            </p>
           </div>
           <div className="flex items-center gap-3">
             {object.ai && !isEditing && (
@@ -89,29 +94,33 @@ export function ObjectDetailPage() {
                 <span className="text-blue-400 font-medium">AI Enabled</span>
               </div>
             )}
-            {isEditing ? (
+            {!isGuest && (
               <>
-                <button
-                  onClick={handleCancel}
-                  className="px-4 py-2 bg-zinc-800 text-zinc-300 rounded-lg hover:bg-zinc-700 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSave}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  Save Changes
-                </button>
+                {isEditing ? (
+                  <>
+                    <button
+                      onClick={handleCancel}
+                      className="px-4 py-2 bg-zinc-800 text-zinc-300 rounded-lg hover:bg-zinc-700 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSave}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      Save Changes
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    <Edit className="w-4 h-4" />
+                    Edit Object
+                  </button>
+                )}
               </>
-            ) : (
-              <button
-                onClick={() => setIsEditing(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                <Edit className="w-4 h-4" />
-                Edit Object
-              </button>
             )}
           </div>
         </div>

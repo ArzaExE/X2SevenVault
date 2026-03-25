@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, ReactNode, useEffect } from "react";
+import api from "../config/axios";
 
 export interface VaultObject {
   id: string;
@@ -49,12 +50,25 @@ interface DataContextType {
   deleteAisle: (warehouseId: string, aisleId: string) => void;
   addShelf: (warehouseId: string, aisleId: string, shelf: string) => void;
   deleteShelf: (warehouseId: string, aisleId: string, shelf: string) => void;
-  addUser: (user: Omit<User, "id">) => void;
+  addUser: (user: Omit<User, "id">) => Promise<void>;
   updateUser: (id: string, user: Partial<User>) => void;
   deleteUser: (id: string) => void;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
+
+// Converte il formato API Laravel nel formato locale
+function mapApiUserToLocal(apiUser: any): User {
+    const role = apiUser.role.charAt(0).toUpperCase() + apiUser.role.slice(1) as "Admin" | "Operator";
+    const status = apiUser.is_active ? "Active" : "Inactive" as "Active" | "Inactive";
+    return {
+        id:     apiUser.id,
+        name:   apiUser.name,
+        email:  apiUser.email,
+        role,
+        status,
+    };
+}
 
 export function DataProvider({ children }: { children: ReactNode }) {
   const [objects, setObjects] = useState<VaultObject[]>([
@@ -145,45 +159,62 @@ export function DataProvider({ children }: { children: ReactNode }) {
     },
   ]);
 
-  const [users, setUsers] = useState<User[]>([
-    {
-      id: "1",
-      name: "Admin User",
-      email: "admin@x2sevenvault.com",
-      role: "Admin",
-      status: "Active",
-    },
-    {
-      id: "2",
-      name: "John Smith",
-      email: "john.smith@x2sevenvault.com",
-      role: "Operator",
-      status: "Active",
-    },
-    {
-      id: "3",
-      name: "Sarah Operator",
-      email: "sarah.operator@x2sevenvault.com",
-      role: "Operator",
-      status: "Active",
-    },
-    {
-      id: "4",
-      name: "Mike Johnson",
-      email: "mike.johnson@x2sevenvault.com",
-      role: "Admin",
-      status: "Active",
-    },
-    {
-      id: "5",
-      name: "Jane Smith",
-      email: "jane.smith@x2sevenvault.com",
-      role: "Operator",
-      status: "Inactive",
-    },
-  ]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
 
-  const addObject = (object: Omit<VaultObject, "id">) => {
+    // Carica utenti all'avvio
+    useEffect(() => {
+        fetchUsers();
+    }, []);
+
+    const fetchUsers = async (search?: string) => {
+        setUsersLoading(true);
+        try {
+            const url = search ? `/users/search/${search}` : '/users';
+            const response = await api.get(url);
+            setUsers(response.data.map(mapApiUserToLocal));
+        } catch (error) {
+            console.error('Error loading users:', error);
+        } finally {
+            setUsersLoading(false);
+        }
+    };
+
+    // casamatta passs: 0yb78qq7qt1!Aa
+
+    const addUser = async (user: Omit<User, "id">): Promise<void> => {
+      const generatedPassword = Math.random().toString(36).slice(-10) + "1!Aa";  
+      
+      try {
+            const response = await api.post('/users', {
+                email:     user.email,
+                full_name: user.name,
+                password:  generatedPassword,
+                role_id:   user.role === 'Admin' ? 1 : 2,
+                role_name: user.role.toLowerCase(),
+                is_active: user.status === 'Active',
+            });
+            
+            const newUser = mapApiUserToLocal(response.data);
+            setUsers(prev => [...prev, newUser]);
+
+            alert(`User created! Temporary password: ${generatedPassword}`);
+        } catch (error) {
+            console.error("Error adding user:", error);
+            throw error;
+        }
+    };
+
+  const updateUser = (id: string, updates: Partial<User>) => {
+    setUsers(users.map((user) => (user.id === id ? { ...user, ...updates } : user)));
+  };
+
+  const deleteUser = async (id: string) => {
+      await api.delete(`/users/${id}`);
+      setUsers(prev => prev.filter(u => u.id !== id));
+  };
+
+    const addObject = (object: Omit<VaultObject, "id">) => {
     const newObject = { ...object, id: Date.now().toString() };
     setObjects([...objects, newObject]);
   };
@@ -272,19 +303,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
         return wh;
       })
     );
-  };
-
-  const addUser = (user: Omit<User, "id">) => {
-    const newUser = { ...user, id: Date.now().toString() };
-    setUsers([...users, newUser]);
-  };
-
-  const updateUser = (id: string, updates: Partial<User>) => {
-    setUsers(users.map((user) => (user.id === id ? { ...user, ...updates } : user)));
-  };
-
-  const deleteUser = (id: string) => {
-    setUsers(users.filter((user) => user.id !== id));
   };
 
   return (

@@ -21,12 +21,16 @@ Route::post('/auth/verify', [AuthController::class, 'verify']);
 
 Route::middleware('firebase.auth')->group(function () {
 
-    // Dati utente autenticato
     Route::get('/me', [UserController::class, 'me']);
 
-    // Lista tutti gli utenti (solo admin)
+    // Users — solo admin
     Route::middleware('role:admin')->group(function () {
         Route::get('/users', [UserController::class, 'index']);
+        Route::get('/users/{id}', [UserController::class, 'show']);
+        Route::post('/users', [UserController::class, 'store']);
+        Route::put('/users/{id}', [UserController::class, 'update']);
+        Route::delete('/users/{id}', [UserController::class, 'destroy']);
+        Route::get('/users/search/{query}', [UserController::class, 'searchUsers']);
     });
 
 });

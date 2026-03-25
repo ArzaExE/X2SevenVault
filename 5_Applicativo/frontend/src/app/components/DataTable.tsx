@@ -5,9 +5,10 @@ import { VaultObject } from "../data/store";
 interface DataTableProps {
   objects: VaultObject[];
   onDelete: (id: string) => void;
+  isReadOnly?: boolean;
 }
 
-export function DataTable({ objects, onDelete }: DataTableProps) {
+export function DataTable({ objects, onDelete, isReadOnly = false }: DataTableProps) {
   const navigate = useNavigate();
 
   return (
@@ -28,15 +29,20 @@ export function DataTable({ objects, onDelete }: DataTableProps) {
               <th className="px-6 py-4 text-left text-xs font-medium text-zinc-300 uppercase tracking-wider">
                 AI
               </th>
-              <th className="px-6 py-4 text-right text-xs font-medium text-zinc-300 uppercase tracking-wider">
-                Actions
-              </th>
+              {!isReadOnly && (
+                <th className="px-6 py-4 text-right text-xs font-medium text-zinc-300 uppercase tracking-wider">
+                  Actions
+                </th>
+              )}
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-800">
             {objects.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-6 py-12 text-center text-zinc-500">
+                <td
+                  colSpan={isReadOnly ? 4 : 5}
+                  className="px-6 py-12 text-center text-zinc-500"
+                >
                   No objects found. Add your first object to get started.
                 </td>
               </tr>
@@ -65,18 +71,20 @@ export function DataTable({ objects, onDelete }: DataTableProps) {
                       </div>
                     )}
                   </td>
-                  <td className="px-6 py-4 text-right">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onDelete(object.id);
-                      }}
-                      className="inline-flex items-center gap-2 px-3 py-1.5 text-red-400 hover:text-red-300 hover:bg-red-950/30 rounded transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      <span className="text-sm">Delete</span>
-                    </button>
-                  </td>
+                  {!isReadOnly && (
+                    <td className="px-6 py-4 text-right">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDelete(object.id);
+                        }}
+                        className="inline-flex items-center gap-2 px-3 py-1.5 text-red-400 hover:text-red-300 hover:bg-red-950/30 rounded transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        <span className="text-sm">Delete</span>
+                      </button>
+                    </td>
+                  )}
                 </tr>
               ))
             )}
