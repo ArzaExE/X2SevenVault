@@ -14,11 +14,13 @@ class FirestoreService
     {
         $this->baseUrl = env('FIRESTORE_BASE_URL');
 
+        // Creazione dell'oggetto ServiceAccountCredentials con le credenziali del file fornito da firestore
         $credentials = new ServiceAccountCredentials(
-            'https://www.googleapis.com/auth/datastore',
-            json_decode(file_get_contents(base_path(env('FIREBASE_CREDENTIALS'))), true)
+            env('GOOGLE_SCOPE'),
+            json_decode(file_get_contents(base_path(env('FIREBASE_CREDENTIALS'))), true) // con true trasforma in array il risultato, senza si ha un oggetto.
         );
 
+        // Si ottiene il token da Google (OAuth) a partire dalle credenziali istanziate in precedenza
         $token = $credentials->fetchAuthToken();
         $this->token = $token['access_token'];
     }

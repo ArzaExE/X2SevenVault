@@ -8,7 +8,8 @@ use Symfony\Component\HttpFoundation\Response;
 
 class CheckRole
 {
-    public function handle(Request $request, Closure $next, string ...$roles): Response // ... spread operator serve per accettare un numero variabile di argomenti
+    // ... spread operator serve per accettare un numero variabile di argomenti
+    public function handle(Request $request, Closure $next, string ...$roles): Response
     {
         $userRole = $request->auth_role;
 
