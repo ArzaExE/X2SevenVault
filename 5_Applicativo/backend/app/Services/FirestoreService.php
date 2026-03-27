@@ -76,7 +76,7 @@ class FirestoreService
         return basename($name);
     }
 
-    public function setDocument(string $collection, string $id, array $data): void
+    public function setDocument(string $collection, string $id, array $data): bool
     {
         $response = Http::withToken($this->token)
             ->patch("{$this->baseUrl}/{$collection}/{$id}", [
@@ -84,18 +84,22 @@ class FirestoreService
             ]);
 
         if ($response->failed()) {
-            throw new \Exception('Error saving document: ' . $response->body());
+            return false;
         }
+
+        return true;
     }
 
-    public function deleteDocument(string $collection, string $id): void
+    public function deleteDocument(string $collection, string $id): bool
     {
         $response = Http::withToken($this->token)
             ->delete("{$this->baseUrl}/{$collection}/{$id}");
 
         if ($response->failed()) {
-            throw new \Exception('Error while deleting document: ' . $response->body());
+            return false;
         }
+
+        return true;
 
     }
 

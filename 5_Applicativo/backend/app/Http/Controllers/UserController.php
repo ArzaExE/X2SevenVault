@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\PasswordUpdateRequest;
+use App\Http\Requests\ProfileUpdateRequest;
+use App\Http\Requests\UserStoreRequest;
+use App\Http\Requests\UserUpdateRequest;
 use Illuminate\Http\Request;
 use App\Services\FirestoreService;
 use Kreait\Firebase\Contract\Auth;
@@ -35,26 +39,30 @@ class UserController extends Controller
      * Aggiorna i dati dell'utente autenticato (solo full_name)
      * PUT /api/me
      */
-    public function updateMe(Request $request)
+    public function updateMe(ProfileUpdateRequest $request)
     {
 
-        $validated = $request->validate([
-            'full_name' => 'required|string|min:2',
-            'email' => 'required|email',
-        ]);
+        $validated = $request->validated();
 
         $uid = $request->auth_user_id;
 
         $user = $this->firestore->getUser($uid);
 
-        $user['full_name'] = $validated['full_name'];
-        $user['email'] = $validated['email'];
+        if ($request->has('full_name')) {
+            $user['full_name'] = $validated['full_name'];
+        }
+
+        if ($request->has('email')) {
+            $user['email'] = $validated['email'];
+            $this->auth->changeUserEmail($uid, $validated['email']);
+        }
 
         // Aggiorna solo su Firestore
-        $this->firestore->setDocument('user_management', $uid, $user);
+        $set = $this->firestore->setDocument('user_management', $uid, $user);
 
-        // Aggiorna su Firebase Auth
-        $this->auth->changeUserEmail($uid, $validated['email']);
+        if (!$set) {
+            return response()->json(['error' => 'Error while saving user'], 404);
+        }
 
         $user = $this->firestore->getUser($uid);
         return response()->json($this->formatUser($user));
@@ -64,13 +72,10 @@ class UserController extends Controller
      * Aggiorna la password dell'utente autenticato
      * PUT /api/me/password
      */
-    public function updatePassword(Request $request)
+    public function updatePassword(PasswordUpdateRequest $request)
     {
         // Non viene chiesto all'utente la sua password attuale perchè è già autenticato con il token
-        $validated = $request->validate([
-            'password'              => 'required|string|min:6',
-            'password_confirmation' => 'required|same:password',
-        ]);
+        $validated = $request->validated();
 
         $uid = $request->auth_user_id;
 
@@ -87,6 +92,10 @@ class UserController extends Controller
     public function index()
     {
         $users = $this->firestore->getCollection('user_management');
+
+        if (!$users) {
+            return response()->json(['error' => 'Users not found'], 404);
+        }
 
         $users = array_map(function ($user) {
             return $this->formatUser($user);
@@ -114,17 +123,9 @@ class UserController extends Controller
      * Crea nuovo utente
      * POST /api/users
      */
-    public function store(Request $request)
+    public function store(UserStoreRequest $request)
     {
-        $validated = $request->validate([
-            'email'     => 'required|email',
-            'full_name' => 'required|string',
-            'password'  => 'required|string|min:6',
-            'role_id'   => 'required|integer',
-            'role_name' => 'required|string',
-            'is_active' => 'boolean',
-        ]);
-
+        $validated = $request->validated();
         // Crea utente su Firebase Auth
         $firebaseUser = $this->auth->createUserWithEmailAndPassword(
             $validated['email'],
@@ -134,7 +135,7 @@ class UserController extends Controller
         $uid = $firebaseUser->uid;
 
         // Salva metadati su Firestore
-        $this->firestore->setDocument('user_management', $uid, [
+        $set = $this->firestore->setDocument('user_management', $uid, [
             'user_id'   => $uid,
             'email'     => $validated['email'],
             'full_name' => $validated['full_name'],
@@ -146,6 +147,10 @@ class UserController extends Controller
             ],
         ]);
 
+        if (!$set) {
+            return response()->json(['error' => 'Error adding user'], 404);
+        }
+
         $user = $this->firestore->getUser($uid);
         return response()->json($this->formatUser($user), 201);
     }
@@ -154,16 +159,11 @@ class UserController extends Controller
      * Aggiorna utente
      * PUT /api/users/{id}
      */
-    public function update(Request $request, string $id)
+    public function update(UserUpdateRequest $request, string $id)
     {
         $user = $this->firestore->getUser($id);
 
-        $validated = $request->validate([
-            'full_name' => 'sometimes|string',
-            'role_id'   => 'sometimes|integer',
-            'role_name' => 'sometimes|string',
-            'is_active' => 'sometimes|boolean',
-        ]);
+        $validated = $request->validated();
 
         if (isset($validated['full_name'])) {
             $user['full_name'] = $validated['full_name'];
@@ -181,7 +181,10 @@ class UserController extends Controller
             $user['is_active'] = $validated['is_active'];
         }
 
-        $this->firestore->setDocument('user_management', $id, $user);
+        $set = $this->firestore->setDocument('user_management', $id, $user);
+        if (!$set) {
+            return response()->json(['error' => 'Error while saving user'], 404);
+        }
 
         return response()->json($this->formatUser($user));
     }
@@ -196,7 +199,11 @@ class UserController extends Controller
         $this->auth->deleteUser($id);
 
         // Elimina da Firestore
-        $this->firestore->deleteDocument('user_management', $id);
+        $delete = $this->firestore->deleteDocument('user_management', $id);
+
+        if (!$delete) {
+            return response()->json(['error' => 'Error while deleting user'], 404);
+        }
 
         return response()->json(['message' => 'User deleted successfully']);
     }

@@ -98,7 +98,10 @@ class ItemManagement extends Controller
 
         $item = $this->firestore->getItem($uid);
         $item['item_id'] = $uid;
-        $this->firestore->setDocument('item_management', $uid, $item);
+        $set = $this->firestore->setDocument('item_management', $uid, $item);
+        if (!$set) {
+            return response()->json(['error' => 'Error while creating item'], 404);
+        }
         return response()->json($this->formatItem($item), 201);
     }
 
@@ -146,7 +149,10 @@ class ItemManagement extends Controller
             }
         }
 
-        $this->firestore->setDocument('item_management', $id, $item);
+        $set = $this->firestore->setDocument('item_management', $id, $item);
+        if (!$set) {
+            return response()->json(['error' => 'Error while updating item'], 404);
+        }
 
         return response()->json($this->formatItem($item));
     }
