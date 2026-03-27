@@ -37,6 +37,18 @@ class FirestoreService
         return $this->parseDocument($response->json());
     }
 
+    public function getItem(string $itemId): ?array
+    {
+        $response = Http::withToken($this->token)
+            ->get("{$this->baseUrl}/item_management/{$itemId}");
+
+        if ($response->failed()) {
+            return null;
+        }
+
+        return $this->parseDocument($response->json());
+    }
+
     public function getCollection(string $collection): array
     {
         $response = Http::withToken($this->token)
@@ -53,6 +65,17 @@ class FirestoreService
         return $results;
     }
 
+    public function createDocument(string $collection, array $data): string
+    {
+        $response = Http::withToken($this->token)
+            ->post("{$this->baseUrl}/{$collection}", [
+                'fields' => $this->encodeFields($data)
+            ]);
+
+        $name = $response->json()['name'];
+        return basename($name);
+    }
+
     public function setDocument(string $collection, string $id, array $data): void
     {
         $response = Http::withToken($this->token)
@@ -67,8 +90,13 @@ class FirestoreService
 
     public function deleteDocument(string $collection, string $id): void
     {
-        Http::withToken($this->token)
+        $response = Http::withToken($this->token)
             ->delete("{$this->baseUrl}/{$collection}/{$id}");
+
+        if ($response->failed()) {
+            throw new \Exception('Error while deleting document: ' . $response->body());
+        }
+
     }
 
     /**

@@ -14,6 +14,7 @@ class UserController extends Controller
     ) {}
 
 //    TODO: Validation dedicated in another file
+//    TODO: Try-catch for manage exception
 
     /**
      * Dati utente autenticato
@@ -31,6 +32,55 @@ class UserController extends Controller
     }
 
     /**
+     * Aggiorna i dati dell'utente autenticato (solo full_name)
+     * PUT /api/me
+     */
+    public function updateMe(Request $request)
+    {
+
+        $validated = $request->validate([
+            'full_name' => 'required|string|min:2',
+            'email' => 'required|email',
+        ]);
+
+        $uid = $request->auth_user_id;
+
+        $user = $this->firestore->getUser($uid);
+
+        $user['full_name'] = $validated['full_name'];
+        $user['email'] = $validated['email'];
+
+        // Aggiorna solo su Firestore
+        $this->firestore->setDocument('user_management', $uid, $user);
+
+        // Aggiorna su Firebase Auth
+        $this->auth->changeUserEmail($uid, $validated['email']);
+
+        $user = $this->firestore->getUser($uid);
+        return response()->json($this->formatUser($user));
+    }
+
+    /**
+     * Aggiorna la password dell'utente autenticato
+     * PUT /api/me/password
+     */
+    public function updatePassword(Request $request)
+    {
+        // Non viene chiesto all'utente la sua password attuale perchè è già autenticato con il token
+        $validated = $request->validate([
+            'password'              => 'required|string|min:6',
+            'password_confirmation' => 'required|same:password',
+        ]);
+
+        $uid = $request->auth_user_id;
+
+        // Aggiorna solo su Firebase Auth — Firestore non gestisce password
+        $this->auth->changeUserPassword($uid, $validated['password']);
+
+        return response()->json(['message' => 'Password updated successfully']);
+    }
+
+    /**
      * Lista tutti gli utenti
      * GET /api/users
      */
@@ -39,7 +89,6 @@ class UserController extends Controller
         $users = $this->firestore->getCollection('user_management');
 
         $users = array_map(function ($user) {
-            unset($user['password_hash']);
             return $this->formatUser($user);
         }, $users);
 
