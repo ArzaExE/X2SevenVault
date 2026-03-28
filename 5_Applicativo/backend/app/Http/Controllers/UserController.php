@@ -17,8 +17,9 @@ class UserController extends Controller
         protected Auth $auth
     ) {}
 
-//    TODO: Validation dedicated in another file
 //    TODO: Try-catch for manage exception
+//    TODO: if is_active false disable user in OAuth
+//    TODO: $uid -> $id
 
     /**
      * Dati utente autenticato
@@ -27,7 +28,7 @@ class UserController extends Controller
     public function me(Request $request)
     {
         return response()->json([
-            'user_id'   => $request->auth_user_id,
+            'id'   => $request->auth_user_id,
             'email'     => $request->auth_user['email'],
             'name'      => $request->auth_user['full_name'],
             'role'      => $request->auth_user['role']['role_name'],
@@ -46,7 +47,7 @@ class UserController extends Controller
 
         $uid = $request->auth_user_id;
 
-        $user = $this->firestore->getUser($uid);
+        $user = $this->firestore->getDocument("user_management", $uid);
 
         if ($request->has('full_name')) {
             $user['full_name'] = $validated['full_name'];
@@ -64,7 +65,7 @@ class UserController extends Controller
             return response()->json(['error' => 'Error while saving user'], 404);
         }
 
-        $user = $this->firestore->getUser($uid);
+        $user = $this->firestore->getDocument("user_management", $uid);
         return response()->json($this->formatUser($user));
     }
 
@@ -110,7 +111,7 @@ class UserController extends Controller
      */
     public function show(string $id)
     {
-        $user = $this->firestore->getUser($id);
+        $user = $this->firestore->getDocument("user_management", $id);
 
         if (!$user) {
             return response()->json(['error' => 'User not found'], 404);
@@ -136,7 +137,6 @@ class UserController extends Controller
 
         // Salva metadati su Firestore
         $set = $this->firestore->setDocument('user_management', $uid, [
-            'user_id'   => $uid,
             'email'     => $validated['email'],
             'full_name' => $validated['full_name'],
             'is_active' => $validated['is_active'] ?? true,
@@ -151,7 +151,7 @@ class UserController extends Controller
             return response()->json(['error' => 'Error adding user'], 404);
         }
 
-        $user = $this->firestore->getUser($uid);
+        $user = $this->firestore->getDocument("user_management", $uid);
         return response()->json($this->formatUser($user), 201);
     }
 
@@ -161,7 +161,7 @@ class UserController extends Controller
      */
     public function update(UserUpdateRequest $request, string $id)
     {
-        $user = $this->firestore->getUser($id);
+        $user = $this->firestore->getDocument("user_management", $id);
 
         $validated = $request->validated();
 
@@ -180,6 +180,8 @@ class UserController extends Controller
         if (isset($validated['is_active'])) {
             $user['is_active'] = $validated['is_active'];
         }
+
+        unset($user['id']);
 
         $set = $this->firestore->setDocument('user_management', $id, $user);
         if (!$set) {
@@ -240,8 +242,6 @@ class UserController extends Controller
     private function formatUser(array $user): array
     {
         return [
-            'id'        => $user['id'] ?? $user['user_id'],
-            'user_id'   => $user['user_id'],
             'email'     => $user['email'],
             'name'      => $user['full_name'],
             'role'      => $user['role']['role_name'],

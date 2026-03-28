@@ -31,7 +31,7 @@ class FirebaseAuth
             $verifiedToken = $this->auth->verifyIdToken($token);
             $userId = $verifiedToken->claims()->get('sub'); //le claims sono le informazioni dell'utente, sub rappresenta la claim dell'id dell'utente
 
-            $user = $this->firestore->getUser($userId);
+            $user = $this->firestore->getDocument("user_management", $userId);
 
             if (!$user) {
                 return response()->json(['error' => 'User not find'], 404);

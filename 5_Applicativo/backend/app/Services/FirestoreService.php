@@ -25,10 +25,10 @@ class FirestoreService
         $this->token = $token['access_token'];
     }
 
-    public function getUser(string $userId): ?array
+    public function getDocument(string $collection, string $id): ?array
     {
         $response = Http::withToken($this->token)
-            ->get("{$this->baseUrl}/user_management/{$userId}");
+            ->get("{$this->baseUrl}/{$collection}/{$id}");
 
         if ($response->failed()) {
             return null;
@@ -37,10 +37,10 @@ class FirestoreService
         return $this->parseDocument($response->json());
     }
 
-    public function getItem(string $itemId): ?array
+    public function getDocumentByPath(string $path): ?array
     {
         $response = Http::withToken($this->token)
-            ->get("{$this->baseUrl}/item_management/{$itemId}");
+            ->get("{$this->baseUrl}/{$path}");
 
         if ($response->failed()) {
             return null;
@@ -106,6 +106,9 @@ class FirestoreService
     /**
      * Converte il formato Firestore REST in array PHP normale
      */
+
+    // TODO: Review these 4 functions and comment them
+
     protected function parseDocument(array $doc): array
     {
         $result = [];

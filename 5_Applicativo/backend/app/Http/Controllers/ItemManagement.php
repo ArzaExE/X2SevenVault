@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ItemStoreRequest;
+use App\Http\Requests\ItemUpdateRequest;
 use App\Services\FirestoreService;
 use Illuminate\Http\Request;
 
@@ -10,6 +12,10 @@ class ItemManagement extends Controller
     public function __construct(
         protected FirestoreService $firestore
     ) {}
+
+    //TODO: write a function to generate AI ID
+    //TODO: find a easiest method for extract requests variables (Item and User Controller)
+    //TODO: change $uid in $id
 
     /**
      * Lista tutti gli items
@@ -32,7 +38,7 @@ class ItemManagement extends Controller
      */
     public function show(string $id)
     {
-        $item = $this->firestore->getItem($id);
+        $item = $this->firestore->getDocument('item_management', $id);
 
         if (!$item) {
             return response()->json(['error' => 'Item not found'], 404);
@@ -45,63 +51,28 @@ class ItemManagement extends Controller
      * Crea nuovo item
      * POST /api/items
      */
-    public function store(Request $request)
+    public function store(ItemStoreRequest $request)
     {
-        $validated = $request->validate([
-            'ai_class_id'   => 'required|string',
-            // TODO: check if ids exists
-            'aisle_id'      => 'required|string',
-            'shelf_id'      => 'required|string',
-            'warehouse_id'  => 'required|string',
+        $validated = $request->validated();
 
-            'description'   => 'nullable|string|max:1000',
-            'is_active'     => 'boolean',
-            'quantity'      => 'required|integer|min:0',
+        $physicalProperties = [
+            'height' => ['unit' => $validated['height_unit'], 'value' => $validated['height_value']],
+            'weight' => ['unit' => $validated['weight_unit'], 'value' => $validated['weight_value']],
+            'width'  => ['unit' => $validated['width_unit'],  'value' => $validated['width_value']],
+        ];
 
-            'height_value'  => 'required|numeric|min:0',
-            'weight_value'  => 'required|numeric|min:0',
-            'width_value'   => 'required|numeric|min:0',
+        $uid = $this->firestore->createDocument('item_management', array_merge(
+            \Arr::only($validated, ['name', 'ai_class_id', 'aisle_id', 'description', 'quantity', 'shelf_id', 'warehouse_id']),
+            ['is_active' => $validated['is_active'] ?? true],
+            ['physical_properties' => $physicalProperties]
+        ));
 
-            // Puoi usare 'in:cm,mm,m' per restringere le unità permesse
-            'height_unit'   => 'required|string|max:10',
-            'weight_unit'   => 'required|string|max:10',
-            'width_unit'    => 'required|string|max:10',
-        ]);
-
-
-        // Salva metadati su Firestore
-        $uid = $this->firestore->createDocument('item_management', [
-            'ai_class_id'   => $validated['ai_class_id'],
-            'aisle_id'      => $validated['aisle_id'],
-            'description'   => $validated['description'] ?? null,
-            'is_active'     => $validated['is_active'] ?? true,
-            'quantity'      => $validated['quantity'],
-            'shelf_id'      => $validated['shelf_id'],
-            'warehouse_id'  => $validated['warehouse_id'],
-
-            // Struttura per le proprietà fisiche
-            'physical_properties' => [
-                'height' => [
-                    'unit'  => $validated['height_unit'],
-                    'value' => $validated['height_value'],
-                ],
-                'weight' => [
-                    'unit'  => $validated['weight_unit'],
-                    'value' => $validated['weight_value'],
-                ],
-                'width' => [
-                    'unit'  => $validated['width_unit'],
-                    'value' => $validated['width_value'],
-                ],
-            ],
-        ]);
-
-        $item = $this->firestore->getItem($uid);
-        $item['item_id'] = $uid;
-        $set = $this->firestore->setDocument('item_management', $uid, $item);
-        if (!$set) {
+        if (!$uid) {
             return response()->json(['error' => 'Error while creating item'], 404);
         }
+
+        $item = $this->firestore->getDocument('item_management', $uid);
+
         return response()->json($this->formatItem($item), 201);
     }
 
@@ -110,30 +81,14 @@ class ItemManagement extends Controller
      * Aggiorna item
      * PUT /api/items/{id}
      */
-    public function update(Request $request, string $id)
+    public function update(ItemUpdateRequest $request, string $id)
     {
-        $item = $this->firestore->getItem($id);
+        $item = $this->firestore->getDocument('item_management', $id);
+        unset($item['id']);
 
-        $validated = $request->validate([
-            'ai_class_id'   => 'sometimes|string',
-            // TODO: check if ids exists
-            'aisle_id'      => 'sometimes|string',
-            'shelf_id'      => 'sometimes|string',
-            'warehouse_id'  => 'sometimes|string',
+        $validated = $request->validated();
 
-            'description'   => 'nullable|string|max:1000',
-            'is_active'     => 'boolean',
-            'quantity'      => 'sometimes|integer|min:0',
-
-            'height_value'  => 'sometimes|numeric|min:0',
-            'weight_value'  => 'sometimes|numeric|min:0',
-            'width_value'   => 'sometimes|numeric|min:0',
-
-            // Puoi usare 'in:cm,mm,m' per restringere le unità permesse
-            'height_unit'   => 'sometimes|string|max:10',
-            'weight_unit'   => 'sometimes|string|max:10',
-            'width_unit'    => 'sometimes|string|max:10',
-        ]);
+        //TODO: explain code
 
         // 1. Mappatura automatica: "chiave_request" => "percorso_nell_array_item"
         foreach ($validated as $key => $value) {
@@ -210,11 +165,11 @@ class ItemManagement extends Controller
     private function formatItem(array $item): array
     {
         return [
+            'name'          => $item['name'],
             'ai_class_id'   => $item['ai_class_id'],
             'aisle_id'      => $item['aisle_id'],
             'description'   => $item['description'],
             'is_active'     => $item['is_active'],
-            'item_id'       => $item['item_id'],
             'height_unit'   => $item['physical_properties']['height']['unit'],
             'height_value'  => $item['physical_properties']['height']['value'],
             'weight_unit'   => $item['physical_properties']['weight']['unit'],
