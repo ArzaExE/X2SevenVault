@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\ItemManagement;
+use App\Http\Controllers\ItemController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
@@ -28,12 +28,11 @@ Route::middleware('firebase.auth')->group(function () {
     Route::put('/me/password', [UserController::class, 'updatePassword']);
 
     // Gestione items
-    Route::get('/items', [ItemManagement::class, 'index']);
-    Route::get('/items/{id}', [ItemManagement::class, 'show']);
-    Route::post('/items', [ItemManagement::class, 'store']);
-    Route::put('/items/{id}', [ItemManagement::class, 'update']);
-    Route::delete('/items/{id}', [ItemManagement::class, 'destroy']);
-    Route::get('/items/search/{query}', [ItemManagement::class, 'searchItems']);
+    Route::get('/items', [ItemController::class, 'index']);
+    Route::get('/items/{id}', [ItemController::class, 'show']);
+    Route::post('/items', [ItemController::class, 'store']);
+    Route::put('/items/{id}', [ItemController::class, 'update']);
+    Route::delete('/items/{id}', [ItemController::class, 'destroy']);
 
 
     // Users — solo admin

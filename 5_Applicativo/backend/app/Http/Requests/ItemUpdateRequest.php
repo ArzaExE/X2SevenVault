@@ -30,7 +30,7 @@ class ItemUpdateRequest extends FormRequest
 
         $rules = [
             'name'        => 'sometimes|string|max:255',
-            'ai_class_id' => 'sometimes|string',
+            'is_ai'       => 'boolean',
             'description' => 'nullable|string|max:1000',
             'is_active'   => 'boolean',
             'quantity'    => 'sometimes|integer|min:0',

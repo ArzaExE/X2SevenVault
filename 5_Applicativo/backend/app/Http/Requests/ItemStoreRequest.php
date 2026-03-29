@@ -29,7 +29,7 @@ class ItemStoreRequest extends FormRequest
 
         return [
             'name' => 'required|string|max:255',
-            'ai_class_id'   => 'nullable|string', // true/false field on frontend, if true auto generate it
+            'is_ai'   => 'boolean', // true/false field on frontend, if true auto generate it
 
             'warehouse_id' => ['required', 'string', new FirestoreDocumentExists('warehouse_management')],
             'aisle_id' => ['required', 'string', new FirestoreDocumentExists("warehouse_management/{$warehouseId}/aisles")],

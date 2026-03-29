@@ -17,10 +17,6 @@ class UserController extends Controller
         protected Auth $auth
     ) {}
 
-//    TODO: Try-catch for manage exception
-//    TODO: if is_active false disable user in OAuth
-//    TODO: $uid -> $id
-
     /**
      * Dati utente autenticato
      * GET /api/me
@@ -45,27 +41,30 @@ class UserController extends Controller
 
         $validated = $request->validated();
 
-        $uid = $request->auth_user_id;
+        $id = $request->auth_user_id;
+        $user = $this->firestore->getDocument("user_management", $id);
 
-        $user = $this->firestore->getDocument("user_management", $uid);
+        if (!$user) {
+            return response()->json(['error' => 'User not found'], 404);
+        }
 
-        if ($request->has('full_name')) {
+        if (isset($validated['full_name'])) {
             $user['full_name'] = $validated['full_name'];
         }
 
-        if ($request->has('email')) {
+        if (isset($validated['email'])) {
             $user['email'] = $validated['email'];
-            $this->auth->changeUserEmail($uid, $validated['email']);
+            $this->auth->changeUserEmail($id, $validated['email']);
         }
 
         // Aggiorna solo su Firestore
-        $set = $this->firestore->setDocument('user_management', $uid, $user);
+        $set = $this->firestore->setDocument('user_management', $id, $user);
 
         if (!$set) {
             return response()->json(['error' => 'Error while saving user'], 404);
         }
 
-        $user = $this->firestore->getDocument("user_management", $uid);
+        $user = $this->firestore->getDocument("user_management", $id);
         return response()->json($this->formatUser($user));
     }
 
@@ -78,10 +77,10 @@ class UserController extends Controller
         // Non viene chiesto all'utente la sua password attuale perchè è già autenticato con il token
         $validated = $request->validated();
 
-        $uid = $request->auth_user_id;
+        $id = $request->auth_user_id;
 
         // Aggiorna solo su Firebase Auth — Firestore non gestisce password
-        $this->auth->changeUserPassword($uid, $validated['password']);
+        $this->auth->changeUserPassword($id, $validated['password']);
 
         return response()->json(['message' => 'Password updated successfully']);
     }
@@ -90,13 +89,12 @@ class UserController extends Controller
      * Lista tutti gli utenti
      * GET /api/users
      */
-    public function index()
+    public function index(Request $request)
     {
-        $users = $this->firestore->getCollection('user_management');
-
-        if (!$users) {
-            return response()->json(['error' => 'Users not found'], 404);
-        }
+        $search = $request->query('search');
+        $users = $search
+            ? $this->searchUsers($search)
+            : $this->firestore->getCollection('user_management');
 
         $users = array_map(function ($user) {
             return $this->formatUser($user);
@@ -133,10 +131,16 @@ class UserController extends Controller
             $validated['password']
         );
 
-        $uid = $firebaseUser->uid;
+        $id = $firebaseUser->uid;
+
+        if (isset($validated['is_active']) && !$validated['is_active']) {
+            $this->auth->updateUser($id, [
+                'disabled' => true,
+            ]);
+        }
 
         // Salva metadati su Firestore
-        $set = $this->firestore->setDocument('user_management', $uid, [
+        $set = $this->firestore->setDocument('user_management', $id, [
             'email'     => $validated['email'],
             'full_name' => $validated['full_name'],
             'is_active' => $validated['is_active'] ?? true,
@@ -148,10 +152,11 @@ class UserController extends Controller
         ]);
 
         if (!$set) {
+            $this->auth->deleteUser($id);
             return response()->json(['error' => 'Error adding user'], 404);
         }
 
-        $user = $this->firestore->getDocument("user_management", $uid);
+        $user = $this->firestore->getDocument("user_management", $id);
         return response()->json($this->formatUser($user), 201);
     }
 
@@ -162,6 +167,10 @@ class UserController extends Controller
     public function update(UserUpdateRequest $request, string $id)
     {
         $user = $this->firestore->getDocument("user_management", $id);
+
+        if (!$user) {
+            return response()->json(['error' => 'User not found'], 404);
+        }
 
         $validated = $request->validated();
 
@@ -178,6 +187,15 @@ class UserController extends Controller
         }
 
         if (isset($validated['is_active'])) {
+            if (!$validated['is_active']) {
+                $this->auth->updateUser($id, [
+                    'disabled' => true,
+                ]);
+            } else{
+                $this->auth->updateUser($id, [
+                    'disabled' => false,
+                ]);
+            }
             $user['is_active'] = $validated['is_active'];
         }
 
@@ -197,15 +215,19 @@ class UserController extends Controller
      */
     public function destroy(string $id)
     {
-        // Elimina da Firebase Auth
-        $this->auth->deleteUser($id);
+        $user = $this->firestore->getDocument("user_management", $id);
 
-        // Elimina da Firestore
+        if (!$user) {
+            return response()->json(['error' => 'User not found'], 404);
+        }
+
         $delete = $this->firestore->deleteDocument('user_management', $id);
 
         if (!$delete) {
             return response()->json(['error' => 'Error while deleting user'], 404);
         }
+
+        $this->auth->deleteUser($id);
 
         return response()->json(['message' => 'User deleted successfully']);
     }
@@ -213,7 +235,7 @@ class UserController extends Controller
     /**
      * Ricerca utenti
      */
-    public function searchUsers(string $query): array
+    private function searchUsers(string $query): array
     {
         $allUsers = $this->firestore->getCollection('user_management');
         $query = strtolower($query);
