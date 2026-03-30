@@ -1,6 +1,6 @@
 import { Trash2, Check, X } from "lucide-react";
 import { useNavigate } from "react-router";
-import { VaultObject } from "../data/store";
+import { VaultObject } from "../context/DataContext";
 
 interface DataTableProps {
   objects: VaultObject[];
@@ -55,11 +55,11 @@ export function DataTable({ objects, onDelete, isReadOnly = false }: DataTablePr
                 >
                   <td className="px-6 py-4 text-white">{object.name}</td>
                   <td className="px-6 py-4 text-zinc-300">
-                    {object.warehouse}, {object.aisle}-{object.shelf}
+                    {object.warehouse_id}-{object.shelf_id}
                   </td>
                   <td className="px-6 py-4 text-zinc-300">{object.quantity}</td>
                   <td className="px-6 py-4">
-                    {object.ai ? (
+                    {object.is_ai ? (
                       <div className="inline-flex items-center gap-1.5 px-2 py-1 bg-green-600/20 text-green-400 rounded text-sm">
                         <Check className="w-3.5 h-3.5" />
                         Enabled

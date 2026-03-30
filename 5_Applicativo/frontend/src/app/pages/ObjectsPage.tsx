@@ -1,24 +1,23 @@
 import { useState } from "react";
 import { DataTable } from "../components/DataTable";
 import { AddObjectDialog } from "../components/AddObjectDialog";
-import { useData } from "../data/store";
+import { useData } from "../context/DataContext";
 import { useAuth } from "../context/AuthContext";
 import { Search, Plus } from "lucide-react";
 
 export function ObjectsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const { objects, addObject, deleteObject, warehouses } = useData();
-  const { user } = useAuth();
+  const { objects, warehouseCount, deleteObject, loading } = useData();
+  const { user, isGuest } = useAuth();
   
-  const isGuest = user?.role === "Guest";
 
   const filteredObjects = objects.filter(
     (obj) =>
       obj.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      obj.warehouse.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      obj.aisle.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      obj.shelf.toLowerCase().includes(searchQuery.toLowerCase())
+      obj.warehouse_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      obj.aisle_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      obj.shelf_id.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -69,12 +68,12 @@ export function ObjectsPage() {
           <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
             <p className="text-zinc-400 text-sm">AI Enabled</p>
             <p className="text-white text-3xl font-semibold mt-2">
-              {objects.filter((obj) => obj.ai).length}
+              {objects.filter((obj) => obj.is_ai).length}
             </p>
           </div>
           <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
             <p className="text-zinc-400 text-sm">Warehouses</p>
-            <p className="text-white text-3xl font-semibold mt-2">{warehouses.length}</p>
+            <p className="text-white text-3xl font-semibold mt-2">{warehouseCount}</p>
           </div>
           <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
             <p className="text-zinc-400 text-sm">Total Quantity</p>
@@ -85,17 +84,21 @@ export function ObjectsPage() {
         </div>
 
         {/* Data Table */}
-        <DataTable objects={filteredObjects} onDelete={deleteObject} isReadOnly={isGuest} />
+        <DataTable 
+          objects={filteredObjects} 
+          onDelete={isGuest ? () => {} : deleteObject} 
+          isReadOnly={isGuest} 
+        />
       </div>
 
-      {/* Add Object Dialog */}
+      {/* Add Object Dialog
       {!isGuest && (
         <AddObjectDialog
           isOpen={isAddDialogOpen}
           onClose={() => setIsAddDialogOpen(false)}
           onAdd={addObject}
         />
-      )}
+      )} */}
     </>
   );
 }

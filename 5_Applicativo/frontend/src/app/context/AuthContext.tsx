@@ -17,6 +17,8 @@ interface AuthContextType {
     loading: boolean;
     login: (email: string, password: string) => Promise<void>;
     logout: () => Promise<void>;
+    loginAsGuest: () => void;
+    isGuest: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -25,6 +27,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
+    const [isGuest, setIsGuest] = useState(false);
+
+    const loginAsGuest = () => setIsGuest(true);
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -55,7 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     return (
-        <AuthContext.Provider value={{ user, profile, loading, login, logout }}>
+        <AuthContext.Provider value={{ user, profile, isGuest, loading, login, loginAsGuest, logout  }}>
             {!loading && children}
         </AuthContext.Provider>
     );

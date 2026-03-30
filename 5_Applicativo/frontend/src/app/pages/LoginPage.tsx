@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Navigate } from "react-router";
+import { Navigate, useNavigate } from "react-router";
 import { Package, Eye, EyeOff } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -11,11 +11,17 @@ export function LoginPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
-  const { login, user } = useAuth();
+  const { login, user, loginAsGuest } = useAuth();
+  const navigate = useNavigate();
 
   if (user) {
     return <Navigate to="/" replace />;
   }
+
+  const handleGuest = () => {
+    loginAsGuest();
+    navigate("/objects");
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
@@ -120,6 +126,7 @@ export function LoginPage() {
             </div>
             <Button
               type="button"
+              onClick={handleGuest}
               variant="outline"
               className="w-full mt-4 border-zinc-700 text-zinc-400 hover:text-white hover:bg-zinc-800"
             >
