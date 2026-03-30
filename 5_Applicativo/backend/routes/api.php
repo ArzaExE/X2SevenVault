@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\AisleController;
 use App\Http\Controllers\ItemController;
+use App\Http\Controllers\ShelfController;
 use App\Http\Controllers\WarehouseController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
@@ -37,15 +39,14 @@ Route::middleware('firebase.auth')->group(function () {
     Route::put('/items/{id}', [ItemController::class, 'update']);
     Route::delete('/items/{id}', [ItemController::class, 'destroy']);
 
-    // Gestione Warehouses
-    //DELETE /api/warehouses/{warehouseId}
+    // Warehouses
+    Route::apiResource('warehouses', WarehouseController::class);
 
-    Route::get('/warehouses', [WarehouseController::class, 'index']);
-    Route::get('/warehouses/{id}', [WarehouseController::class, 'show']);
-    Route::post('/warehouses', [WarehouseController::class, 'store']);
-    Route::put('/warehouses/{id}', [WarehouseController::class, 'update']);
-    Route::delete('/warehouses/{id}', [WarehouseController::class, 'destroy']);
+    // Aisles (annidate dentro warehouse)
+    Route::apiResource('warehouses.aisles', AisleController::class);
 
+    // Shelves (annidate dentro aisle)
+    Route::apiResource('warehouses.aisles.shelves', ShelfController::class);
 
 
     // Users — solo admin

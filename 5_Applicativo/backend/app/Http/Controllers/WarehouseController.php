@@ -70,7 +70,6 @@ class WarehouseController extends Controller
         }
 
         $store = $this->firestore->setDocument('warehouse_management', $validated['warehouse_id'], [
-            'id' => strtoupper($validated['warehouse_id']),
             'name'        => $validated['name'],
             'description' => $validated['description'] ?? null,
             'is_active'   => $validated['is_active'] ?? true,
@@ -102,6 +101,7 @@ class WarehouseController extends Controller
             $warehouse[$key] = $value;
         }
 
+        unset($warehouse['id']);
 
         $set = $this->firestore->setDocument('warehouse_management', $warehouseId, $warehouse);
 
@@ -136,7 +136,6 @@ class WarehouseController extends Controller
     private function formatWarehouse(array $warehouse): array
     {
         return [
-            'id'          => $warehouse['id'],
             'name'        => $warehouse['name'],
             'description' => $warehouse['description'] ?? null,
             'is_active'   => $warehouse['is_active'],
