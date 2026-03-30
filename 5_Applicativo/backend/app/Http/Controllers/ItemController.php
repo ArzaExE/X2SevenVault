@@ -196,6 +196,7 @@ class ItemController extends Controller
     private function formatItem(array $item): array
     {
         return [
+            'id' => $item['id'],
             'name' => $item['name'],
             'is_ai' => $item['is_ai'],
             'ai_class_id' => $item['ai_class_id'],

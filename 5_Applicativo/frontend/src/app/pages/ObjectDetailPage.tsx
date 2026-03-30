@@ -1,36 +1,79 @@
-import { useParams, useNavigate } from "react-router";
-import { useData } from "../data/store";
+import { useParams, useNavigate, Navigate } from "react-router";
+import { Item, useData } from "../context/DataContext";
 import { useAuth } from "../context/AuthContext";
 import { ArrowLeft, Package, MapPin, Layers, Weight, Ruler, Maximize, Bot, Edit, Hash } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { updateItem } from "../services/itemService";
 
 export function ObjectDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { getObject, updateObject } = useData();
-  const { user } = useAuth();
+  const { getItemById, warehouseCount, deleteItem, loading } = useData();
+  const [item, setItem] = useState<Item | null>(null);
+  const { user, isGuest, authLoading } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
+  const [loadingItem, setLoadingItem] = useState(true);
 
-  const isGuest = user?.role === "Guest";
-  const object = getObject(id || "");
+  const handleGuest = () => {
+    navigate("/objects");
+  };
+  useEffect(() => {
+    const fetchItem = async () => {
+      if (!id) return;
+
+      const data = await getItemById(id);
+      setItem(data);
+
+      setLoadingItem(false);
+    };
+
+    fetchItem();
+  }, [id]);
+
+  useEffect(() => {
+    if (!item) return;
+
+    setEditForm({
+      name: item.name,
+      description: item.description,
+      weight: item.weight,
+      width: item.width,
+      height: item.height,
+      quantity: item.quantity,
+      ai: item.is_ai,
+    });
+  }, [item]);
 
   const [editForm, setEditForm] = useState({
-    name: object?.name || "",
-    description: object?.description || "",
-    weight: object?.weight || 0,
-    width: object?.width || 0,
-    height: object?.height || 0,
-    quantity: object?.quantity || 0,
-    ai: object?.ai || false,
+    name: "",
+    description: "",
+    weight: 0,
+    width: 0,
+    height: 0,
+    quantity: 0,
+    ai: false,
   });
 
-  if (!object) {
+  if (authLoading || loadingItem) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <p className="text-zinc-400 text-lg">Loading...</p>
+      </div>
+    );
+  }
+
+  // ora authLoading è false
+  if (!user && !isGuest) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (!item) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
           <p className="text-zinc-400 text-lg">Object not found</p>
           <button
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/objects")}
             className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             Back to Objects
@@ -40,22 +83,22 @@ export function ObjectDetailPage() {
     );
   }
 
-  const location = `${object.warehouse}, ${object.aisle}-${object.shelf}`;
+  const location = `${item.warehouse_id}, ${item.aisle_id}-${item.shelf_id}`;
 
   const handleSave = () => {
-    updateObject(object.id, editForm);
+    updateItem(item.id, editForm);
     setIsEditing(false);
   };
 
   const handleCancel = () => {
     setEditForm({
-      name: object.name,
-      description: object.description,
-      weight: object.weight,
-      width: object.width,
-      height: object.height,
-      quantity: object.quantity,
-      ai: object.ai,
+      name: item.name,
+      description: item.description,
+      weight: item.weight,
+      width: item.width,
+      height: item.height,
+      quantity: item.quantity,
+      ai: item.is_ai,
     });
     setIsEditing(false);
   };
@@ -65,7 +108,7 @@ export function ObjectDetailPage() {
       {/* Header */}
       <div className="bg-zinc-900 border-b border-zinc-800 px-8 py-6">
         <button
-          onClick={() => navigate("/")}
+          onClick={handleGuest}
           className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors mb-4"
         >
           <ArrowLeft className="w-5 h-5" />
@@ -81,14 +124,14 @@ export function ObjectDetailPage() {
                 className="text-2xl font-semibold bg-zinc-800 border border-zinc-700 rounded px-3 py-1 text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
               />
             ) : (
-              <h1 className="text-white text-2xl font-semibold">{object.name}</h1>
+              <h1 className="text-white text-2xl font-semibold">{item.name}</h1>
             )}
             <p className="text-zinc-400 mt-1">
               {isGuest ? "Object Details (Read-only)" : "Object Details"}
             </p>
           </div>
           <div className="flex items-center gap-3">
-            {object.ai && !isEditing && (
+            {item.is_ai && !isEditing && (
               <div className="flex items-center gap-2 px-4 py-2 bg-blue-600/20 border border-blue-600/40 rounded-lg">
                 <Bot className="w-5 h-5 text-blue-400" />
                 <span className="text-blue-400 font-medium">AI Enabled</span>
@@ -144,21 +187,21 @@ export function ObjectDetailPage() {
                 <Package className="w-5 h-5 text-zinc-400 mt-0.5" />
                 <div>
                   <p className="text-zinc-400 text-sm">Warehouse</p>
-                  <p className="text-white font-medium">{object.warehouse}</p>
+                  <p className="text-white font-medium">{item.warehouse_id}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
                 <Layers className="w-5 h-5 text-zinc-400 mt-0.5" />
                 <div>
                   <p className="text-zinc-400 text-sm">Aisle</p>
-                  <p className="text-white font-medium">{object.aisle}</p>
+                  <p className="text-white font-medium">{item.aisle_id}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
                 <Layers className="w-5 h-5 text-zinc-400 mt-0.5" />
                 <div>
                   <p className="text-zinc-400 text-sm">Shelf</p>
-                  <p className="text-white font-medium">{object.shelf}</p>
+                  <p className="text-white font-medium">{item.shelf_id}</p>
                 </div>
               </div>
             </div>
@@ -181,7 +224,7 @@ export function ObjectDetailPage() {
                       className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-1 text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
                     />
                   ) : (
-                    <p className="text-white font-medium">{object.quantity}</p>
+                    <p className="text-white font-medium">{item.quantity}</p>
                   )}
                 </div>
               </div>
@@ -198,7 +241,7 @@ export function ObjectDetailPage() {
                       className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-1 text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
                     />
                   ) : (
-                    <p className="text-white font-medium">{object.weight} kg</p>
+                    <p className="text-white font-medium">{item.weight} kg</p>
                   )}
                 </div>
               </div>
@@ -215,7 +258,7 @@ export function ObjectDetailPage() {
                       className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-1 text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
                     />
                   ) : (
-                    <p className="text-white font-medium">{object.width} cm</p>
+                    <p className="text-white font-medium">{item.width} cm</p>
                   )}
                 </div>
               </div>
@@ -232,7 +275,7 @@ export function ObjectDetailPage() {
                       className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-1 text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
                     />
                   ) : (
-                    <p className="text-white font-medium">{object.height} cm</p>
+                    <p className="text-white font-medium">{item.height} cm</p>
                   )}
                 </div>
               </div>
@@ -251,7 +294,7 @@ export function ObjectDetailPage() {
                       <span className="text-white">Enable AI</span>
                     </label>
                   ) : (
-                    <p className="text-white font-medium">{object.ai ? "Enabled" : "Disabled"}</p>
+                    <p className="text-white font-medium">{item.is_ai ? "Enabled" : "Disabled"}</p>
                   )}
                 </div>
               </div>
@@ -270,7 +313,7 @@ export function ObjectDetailPage() {
                 placeholder="Enter object description"
               />
             ) : (
-              <p className="text-zinc-300 leading-relaxed">{object.description}</p>
+              <p className="text-zinc-300 leading-relaxed">{item.description}</p>
             )}
           </div>
         </div>

@@ -14,7 +14,7 @@ interface UserProfile {
 interface AuthContextType {
     user: User | null;
     profile: UserProfile | null;
-    loading: boolean;
+    authLoading: boolean;
     login: (email: string, password: string) => Promise<void>;
     logout: () => Promise<void>;
     loginAsGuest: () => void;
@@ -26,10 +26,16 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [profile, setProfile] = useState<UserProfile | null>(null);
-    const [loading, setLoading] = useState(true);
+    const [authLoading, setAuthLoading] = useState(true);
     const [isGuest, setIsGuest] = useState(false);
+    const [token, setToken] = useState<string | null>(null);
 
-    const loginAsGuest = () => setIsGuest(true);
+    // 🔹 RIPRISTINO AL REFRESH
+    useEffect(() => {
+        const guest = localStorage.getItem("guest") === "true";
+        setIsGuest(guest);
+        setAuthLoading(false);
+    }, []);
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -45,7 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setUser(null);
                 setProfile(null);
             }
-            setLoading(false);
+            setAuthLoading(false);
         });
 
         return () => unsubscribe();
@@ -55,13 +61,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await signInWithEmailAndPassword(auth, email, password);
     };
 
+    const loginAsGuest = () => {
+        // Salvo in localStorage che sei guest
+        localStorage.setItem("guest", "true");
+        setIsGuest(true);
+    };
+
     const logout = async (): Promise<void> => {
         await signOut(auth);
     };
 
     return (
-        <AuthContext.Provider value={{ user, profile, isGuest, loading, login, loginAsGuest, logout  }}>
-            {!loading && children}
+        <AuthContext.Provider value={{ user, profile, isGuest, authLoading, login, loginAsGuest, logout  }}>
+            {!authLoading && children}
         </AuthContext.Provider>
     );
 }

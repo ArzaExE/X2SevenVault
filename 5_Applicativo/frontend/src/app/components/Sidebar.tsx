@@ -5,7 +5,9 @@ import { useAuth } from "../context/AuthContext";
 export function Sidebar() {
     const navigate = useNavigate();
     const location = useLocation();
-    const { profile, logout } = useAuth();
+    const { profile, isGuest, logout } = useAuth();
+
+    if (isGuest) return null; // Non mostrare la sidebar agli ospiti
 
     const allNavItems = [
         { id: "dashboard", label: "Dashboard", icon: Home, path: "/", roles: ["admin", "operator"] },

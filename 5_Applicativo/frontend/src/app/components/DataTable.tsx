@@ -1,14 +1,14 @@
 import { Trash2, Check, X } from "lucide-react";
 import { useNavigate } from "react-router";
-import { VaultObject } from "../context/DataContext";
+import { Item } from "../context/DataContext";
 
 interface DataTableProps {
-  objects: VaultObject[];
+  items: Item[];
   onDelete: (id: string) => void;
   isReadOnly?: boolean;
 }
 
-export function DataTable({ objects, onDelete, isReadOnly = false }: DataTableProps) {
+export function DataTable({ items, onDelete, isReadOnly = false }: DataTableProps) {
   const navigate = useNavigate();
 
   return (
@@ -37,7 +37,7 @@ export function DataTable({ objects, onDelete, isReadOnly = false }: DataTablePr
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-800">
-            {objects.length === 0 ? (
+            {items.length === 0 ? (
               <tr>
                 <td
                   colSpan={isReadOnly ? 4 : 5}
@@ -47,19 +47,19 @@ export function DataTable({ objects, onDelete, isReadOnly = false }: DataTablePr
                 </td>
               </tr>
             ) : (
-              objects.map((object) => (
+              items.map((item) => (
                 <tr
-                  key={object.id}
-                  onClick={() => navigate(`/object/${object.id}`)}
+                  key={item.id}
+                  onClick={() => navigate(`/object/${item.id}`)}
                   className="hover:bg-zinc-800/50 transition-colors cursor-pointer"
                 >
-                  <td className="px-6 py-4 text-white">{object.name}</td>
+                  <td className="px-6 py-4 text-white">{item.name}</td>
                   <td className="px-6 py-4 text-zinc-300">
-                    {object.warehouse_id}-{object.shelf_id}
+                    {item.warehouse_id}-{item.shelf_id}
                   </td>
-                  <td className="px-6 py-4 text-zinc-300">{object.quantity}</td>
+                  <td className="px-6 py-4 text-zinc-300">{item.quantity}</td>
                   <td className="px-6 py-4">
-                    {object.is_ai ? (
+                    {item.is_ai ? (
                       <div className="inline-flex items-center gap-1.5 px-2 py-1 bg-green-600/20 text-green-400 rounded text-sm">
                         <Check className="w-3.5 h-3.5" />
                         Enabled
@@ -76,7 +76,7 @@ export function DataTable({ objects, onDelete, isReadOnly = false }: DataTablePr
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          onDelete(object.id);
+                          onDelete(item.id);
                         }}
                         className="inline-flex items-center gap-2 px-3 py-1.5 text-red-400 hover:text-red-300 hover:bg-red-950/30 rounded transition-colors"
                       >

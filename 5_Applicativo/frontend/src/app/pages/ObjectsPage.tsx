@@ -4,15 +4,27 @@ import { AddObjectDialog } from "../components/AddObjectDialog";
 import { useData } from "../context/DataContext";
 import { useAuth } from "../context/AuthContext";
 import { Search, Plus } from "lucide-react";
+import { Navigate } from "react-router";
 
 export function ObjectsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const { objects, warehouseCount, deleteObject, loading } = useData();
-  const { user, isGuest } = useAuth();
-  
+  const { items, warehouseCount, deleteItem, loading } = useData();
+  const { user, isGuest, authLoading } = useAuth();
 
-  const filteredObjects = objects.filter(
+
+  if (loading || authLoading)
+    return (
+      <div className="flex items-center justify-center h-full">
+        <p className="text-zinc-400 text-lg">Loading...</p>
+      </div>
+    );
+
+  if (!user && !isGuest && !authLoading) {
+    return <Navigate to="/login" replace/>;
+  }
+
+  const filteredObjects = items.filter(
     (obj) =>
       obj.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       obj.warehouse_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -63,12 +75,12 @@ export function ObjectsPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
             <p className="text-zinc-400 text-sm">Total Objects</p>
-            <p className="text-white text-3xl font-semibold mt-2">{objects.length}</p>
+            <p className="text-white text-3xl font-semibold mt-2">{items.length}</p>
           </div>
           <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
             <p className="text-zinc-400 text-sm">AI Enabled</p>
             <p className="text-white text-3xl font-semibold mt-2">
-              {objects.filter((obj) => obj.is_ai).length}
+              {items.filter((obj) => obj.is_ai).length}
             </p>
           </div>
           <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
@@ -78,15 +90,15 @@ export function ObjectsPage() {
           <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
             <p className="text-zinc-400 text-sm">Total Quantity</p>
             <p className="text-white text-3xl font-semibold mt-2">
-              {objects.reduce((sum, obj) => sum + obj.quantity, 0)}
+              {items.reduce((sum, obj) => sum + obj.quantity, 0)}
             </p>
           </div>
         </div>
 
         {/* Data Table */}
         <DataTable 
-          objects={filteredObjects} 
-          onDelete={isGuest ? () => {} : deleteObject} 
+          items={filteredObjects} 
+          onDelete={isGuest ? () => {} : deleteItem} 
           isReadOnly={isGuest} 
         />
       </div>

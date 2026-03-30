@@ -1,11 +1,17 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
-import { getItems, deleteItem } from "../services/itemService";
-import { getWarehouses, deleteWarehouse } from "../services/WarehouseService";
+import { 
+  getItems, 
+  getItemById as fetchItemById, 
+  deleteItem,
+  createItem,
+  updateItem
+} 
+from "../services/itemService";import { getWarehouses, deleteWarehouse } from "../services/WarehouseService";
 
 //
 // 🔹 1. TYPE
 //
-export interface VaultObject {
+export interface Item {
   id: string;
   name: string;
   warehouse_id: string;
@@ -35,10 +41,13 @@ export interface Aisle {
 // 🔹 2. CONTEXT TYPE
 //
 interface DataContextType {
-  objects: VaultObject[];
+  items: Item[];
+  getItemById: (id: string) => Promise<Item | null>;
+  addItem: (data: Omit<Item, "id">) => Promise<void>;
+  updateItem: (id: string, data: Partial<Item>) => Promise<void>;
+  deleteItem: (id: string) => Promise<void>;
   warehouseCount: number;
   warehouses: Warehouse[];
-  deleteObject: (id: string) => void;
   loading: boolean;
 }
 
@@ -48,10 +57,10 @@ interface DataContextType {
 const DataContext = createContext<DataContextType | null>(null);
 
 export function DataProvider({ children }: { children: ReactNode }) {
-  const [objects, setObjects] = useState<VaultObject[]>([]);
+  const [items, setItems] = useState<Item[]>([]);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [loading, setLoading] = useState(true);
-  const warehouseCount = Array.from(new Set(objects.map(obj => obj.warehouse_id))).length;
+  const warehouseCount = Array.from(new Set(items.map(item => item.warehouse_id))).length;
   // 🔹 LOAD iniziale
   useEffect(() => {
     loadItems();
@@ -62,7 +71,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     try {
       const res = await getItems();
       console.log("Loaded items:", res.data);
-      setObjects(res.data);
+      setItems(res.data);
     } catch (err) {
       console.error("Error loading items:", err);
     } finally {
@@ -83,26 +92,55 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   };
 
-//   // 🔹 ADD
-//   const addObject = async (data: any) => {
-//     const res = await createItem(data);
-//     setObjects((prev) => [...prev, res.data]);
-//   };
-
-//   // 🔹 DELETE
-  const removeObject = async (id: string) => {
-    await deleteItem(id);
-    setObjects((prev) => prev.filter((obj) => obj.id !== id));
+  const getItemById = async (id: string): Promise<Item | null> => {
+    try {
+      const res = await fetchItemById(id);
+      return res.data;
+    } catch (err) {
+      console.error("Error fetching item:", err);
+      return null;
+    }
   };
 
+  const addItem = async (data: Omit<Item, "id">) => {
+    try {
+      const res = await createItem(data);
+      setItems((prev) => [...prev, res.data]);
+    } catch (err) {
+      console.error("Error creating item:", err);
+    }
+  };
+
+  const editItem = async (id: string, data: Partial<Item>) => {
+    try {
+      const res = await updateItem(id, data);
+      setItems((prev) =>
+        prev.map((item) => (item.id === id ? res.data : item))
+      );
+    } catch (err) {
+      console.error("Error updating item:", err);
+    }
+  };
+
+  const removeItem = async (id: string) => {
+    try {
+      await deleteItem(id);
+      setItems((prev) => prev.filter((item) => item.id !== id));
+    } catch (err) {
+      console.error("Error deleting item:", err);
+    }
+  };
   return (
     <DataContext.Provider
       value={{
-        objects,
+        items,
+        getItemById,
+        addItem,
+        updateItem: editItem,
+        deleteItem: removeItem,
         warehouses,
         warehouseCount,
-        loading,
-        deleteObject: removeObject
+        loading
       }}
     >
       {children}
