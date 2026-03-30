@@ -31,9 +31,9 @@ class ItemStoreRequest extends FormRequest
             'name' => 'required|string|max:255',
             'is_ai'   => 'boolean', // true/false field on frontend, if true auto generate it
 
-            'warehouse_id' => ['required', 'string', new FirestoreDocumentExists('warehouse_management')],
-            'aisle_id' => ['required', 'string', new FirestoreDocumentExists("warehouse_management/{$warehouseId}/aisles")],
-            'shelf_id' => ['required', 'string', new FirestoreDocumentExists("warehouse_management/{$warehouseId}/aisles/{$aisleId}/shelves")],
+            'warehouse_id' => ['required', 'string', 'regex:/^WH_[A-Za-z0-9]+$/', new FirestoreDocumentExists('warehouse_management'),],
+            'aisle_id' => ['required', 'string', 'regex:/^[A-Z][0-9]+$/', new FirestoreDocumentExists("warehouse_management/{$warehouseId}/aisles")],
+            'shelf_id' => ['required', 'string', 'regex:/^[A-Z][0-9]+$/', new FirestoreDocumentExists("warehouse_management/{$warehouseId}/aisles/{$aisleId}/shelves")],
 
             'description'   => 'nullable|string|max:1000',
             'is_active'     => 'boolean',
@@ -47,6 +47,18 @@ class ItemStoreRequest extends FormRequest
             'height_unit'   => 'required|string|in:cm,mm,m',
             'weight_unit'   => 'required|string|in:kg,lbs',
             'width_unit'    => 'required|string|in:cm,mm,m',
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'warehouse_id.required' => 'The warehouse ID is required.',
+            'warehouse_id.regex'    => 'The warehouse ID must start with WH_ followed by alphanumeric characters (e.g. WH_A).',
+            'aisle_id.required' => 'The aisle ID is required.',
+            'aisle_id.regex'    => "The aisle ID must be the letter and the number of the aisle. (e.g: A2, D42, C77).",
+            'shelf_id.required' => 'The shelf ID is required.',
+            'shelf_id.regex'    => 'The shelf ID must be the letter and the number of the aisle. (e.g: S2, D42, C77).',
         ];
     }
 }

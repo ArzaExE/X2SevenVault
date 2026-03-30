@@ -46,9 +46,9 @@ class ItemUpdateRequest extends FormRequest
 
         // Se cambia warehouse → aisle e shelf diventano obbligatori
         if ($this->has('warehouse_id')) {
-            $rules['warehouse_id'] = ['required', 'string', new FirestoreDocumentExists('warehouse_management')];
-            $rules['aisle_id']     = ['required', 'string', new FirestoreDocumentExists("warehouse_management/{$warehouseId}/aisles")];
-            $rules['shelf_id']     = ['required', 'string', new FirestoreDocumentExists("warehouse_management/{$warehouseId}/aisles/{$aisleId}/shelves")];
+            $rules['warehouse_id'] = ['required', 'string', 'regex:/^WH_[A-Za-z0-9]+$/',  new FirestoreDocumentExists('warehouse_management')];
+            $rules['aisle_id']     = ['required', 'string', 'regex:/^[A-Z][0-9]+$/', new FirestoreDocumentExists("warehouse_management/{$warehouseId}/aisles")];
+            $rules['shelf_id']     = ['required', 'string', 'regex:/^[A-Z][0-9]+$/', new FirestoreDocumentExists("warehouse_management/{$warehouseId}/aisles/{$aisleId}/shelves")];
             return $rules;
         }
 
@@ -58,8 +58,8 @@ class ItemUpdateRequest extends FormRequest
             $existingItem = $firestore->getDocument('item_management', $this->route('id'));
             $existingWarehouseId = $existingItem['warehouse_id'];
 
-            $rules['aisle_id'] = ['required', 'string', new FirestoreDocumentExists("warehouse_management/{$existingWarehouseId}/aisles")];
-            $rules['shelf_id'] = ['required', 'string', new FirestoreDocumentExists("warehouse_management/{$existingWarehouseId}/aisles/{$aisleId}/shelves")];
+            $rules['aisle_id']     = ['required', 'string', 'regex:/^[A-Z][0-9]+$/', new FirestoreDocumentExists("warehouse_management/{$existingWarehouseId}/aisles")];
+            $rules['shelf_id']     = ['required', 'string', 'regex:/^[A-Z][0-9]+$/', new FirestoreDocumentExists("warehouse_management/{$existingWarehouseId}/aisles/{$aisleId}/shelves")];
             return $rules;
         }
 
@@ -69,7 +69,8 @@ class ItemUpdateRequest extends FormRequest
             $existingWarehouseId = $existingItem['warehouse_id'];
             $existingAisleId    = $existingItem['aisle_id'];
 
-            $rules['shelf_id'] = ['required', 'string', new FirestoreDocumentExists("warehouse_management/{$existingWarehouseId}/aisles/{$existingAisleId}/shelves")];
+            $rules['shelf_id']     = ['required', 'string', 'regex:/^[A-Z][0-9]+$/', new FirestoreDocumentExists("warehouse_management/{$existingWarehouseId}/aisles/{$existingAisleId}/shelves")];
+
         }
 
         return $rules;

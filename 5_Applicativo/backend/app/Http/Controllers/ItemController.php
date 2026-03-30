@@ -67,6 +67,8 @@ class ItemController extends Controller
             $ai_class_id = $this->generateAiId();
         }
 
+        $validated['shelf_id'] = "{$validated['aisle_id']}_{$validated['shelf_id']}";
+
         $id = $this->firestore->createDocument('item_management', array_merge(
             \Arr::only($validated, ['name', 'aisle_id', 'description', 'quantity', 'shelf_id', 'warehouse_id']),
             ['is_ai'   => $validated['is_ai'] ?? false],

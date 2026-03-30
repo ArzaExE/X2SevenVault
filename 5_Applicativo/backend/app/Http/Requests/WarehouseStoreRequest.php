@@ -29,7 +29,7 @@ class WarehouseStoreRequest extends FormRequest
              * [A-Za-z0-9]+ --> seguito da almeno un carattere alfanumerico
              * $ --> fine stringa
              */
-            'warehouse_id' => ['required', 'string', 'regex:/^WH_[A-Za-z0-9_]+$/'],
+            'warehouse_id' => ['required', 'string', 'regex:/^WH_[A-Za-z0-9]+$/'],
             'name'         => 'required|string|max:255',
             'description'  => 'nullable|string|max:1000',
             'is_active'    => 'boolean',
