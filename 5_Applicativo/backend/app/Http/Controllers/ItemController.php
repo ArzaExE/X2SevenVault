@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 
 class ItemController extends Controller
 {
+    // TODO: change return status code (Item and User)
     public function __construct(
         protected FirestoreService $firestore
     )
@@ -138,7 +139,11 @@ class ItemController extends Controller
             return response()->json(['error' => 'Item not found'], 404);
         }
 
-        $this->firestore->deleteDocument('item_management', $id);
+        $delete = $this->firestore->deleteDocument('item_management', $id);
+
+        if (!$delete) {
+            return response()->json(['error' => 'Error while deleting item'], 500);
+        }
 
         return response()->json(['message' => 'Item deleted successfully']);
     }

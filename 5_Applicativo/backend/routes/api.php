@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ItemController;
+use App\Http\Controllers\WarehouseController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
@@ -20,6 +21,8 @@ Route::post('/auth/verify', [AuthController::class, 'verify']);
 |--------------------------------------------------------------------------
 */
 
+// TODO: find a non-redundant method
+
 Route::middleware('firebase.auth')->group(function () {
 
     // Gestione utente singolo
@@ -33,6 +36,16 @@ Route::middleware('firebase.auth')->group(function () {
     Route::post('/items', [ItemController::class, 'store']);
     Route::put('/items/{id}', [ItemController::class, 'update']);
     Route::delete('/items/{id}', [ItemController::class, 'destroy']);
+
+    // Gestione Warehouses
+    //DELETE /api/warehouses/{warehouseId}
+
+    Route::get('/warehouses', [WarehouseController::class, 'index']);
+    Route::get('/warehouses/{id}', [WarehouseController::class, 'show']);
+    Route::post('/warehouses', [WarehouseController::class, 'store']);
+    Route::put('/warehouses/{id}', [WarehouseController::class, 'update']);
+    Route::delete('/warehouses/{id}', [WarehouseController::class, 'destroy']);
+
 
 
     // Users — solo admin
