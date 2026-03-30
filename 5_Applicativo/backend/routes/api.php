@@ -16,7 +16,8 @@ use App\Http\Controllers\UserController;
 
 // Verifica token Firebase
 Route::post('/auth/verify', [AuthController::class, 'verify']);
-
+Route::get('/items', [ItemController::class, 'index']);
+Route::get('/items/{id}', [ItemController::class, 'show']);
 /*
 |--------------------------------------------------------------------------
 | Route protette — richiedono token Firebase valido
@@ -33,8 +34,6 @@ Route::middleware('firebase.auth')->group(function () {
     Route::put('/me/password', [UserController::class, 'updatePassword']);
 
     // Gestione items
-    Route::get('/items', [ItemController::class, 'index']);
-    Route::get('/items/{id}', [ItemController::class, 'show']);
     Route::post('/items', [ItemController::class, 'store']);
     Route::put('/items/{id}', [ItemController::class, 'update']);
     Route::delete('/items/{id}', [ItemController::class, 'destroy']);
