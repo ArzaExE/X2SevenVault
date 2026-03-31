@@ -146,6 +146,7 @@ class ShelfController extends Controller
     private function formatShelf(array $shelf): array
     {
         return [
+            'id'           => $shelf['id'],
             'name'         => $shelf['name'],
             'description'  => $shelf['description'] ?? null,
             'is_active'    => $shelf['is_active'],

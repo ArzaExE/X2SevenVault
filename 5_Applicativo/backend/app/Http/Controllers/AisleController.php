@@ -143,6 +143,7 @@ class AisleController extends Controller
     private function formatAisle(array $aisle): array
     {
         return [
+            'id'           => $aisle['id'],
             'name'         => $aisle['name'],
             'description'  => $aisle['description'] ?? null,
             'is_active'    => $aisle['is_active'],

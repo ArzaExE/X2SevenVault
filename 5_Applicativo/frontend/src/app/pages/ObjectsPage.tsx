@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { DataTable } from "../components/DataTable";
 import { AddObjectDialog } from "../components/AddObjectDialog";
-import { useData } from "../context/DataContext";
+import { useItems } from "../context/ItemsContext";
 import { useAuth } from "../context/AuthContext";
 import { Search, Plus } from "lucide-react";
 import { Navigate } from "react-router";
@@ -9,11 +9,12 @@ import { Navigate } from "react-router";
 export function ObjectsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const { items, warehouseCount, deleteItem, loading } = useData();
+  const { items, warehouses, warehouseCount, addItem, deleteItem, itemLoading } = useItems();
   const { user, isGuest, authLoading } = useAuth();
+  // const { warehouses } = useWarehouses();
 
 
-  if (loading || authLoading)
+  if (itemLoading || authLoading)
     return (
       <div className="flex items-center justify-center h-full">
         <p className="text-zinc-400 text-lg">Loading...</p>
@@ -40,10 +41,10 @@ export function ObjectsPage() {
           <div>
             <h1 className="text-white text-2xl font-semibold">Objects Management</h1>
             <p className="text-zinc-400 mt-1">
-              {isGuest ? "View vault objects (Read-only mode)" : "Manage and organize your vault objects"}
+              {!user ? "View vault objects (Read-only mode)" : "Manage and organize your vault objects"}
             </p>
           </div>
-          {!isGuest && (
+          {user && (
             <button
               onClick={() => setIsAddDialogOpen(true)}
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -103,14 +104,15 @@ export function ObjectsPage() {
         />
       </div>
 
-      {/* Add Object Dialog
-      {!isGuest && (
+      {/* Add Object Dialog */}
+      {user && (
         <AddObjectDialog
           isOpen={isAddDialogOpen}
           onClose={() => setIsAddDialogOpen(false)}
-          onAdd={addObject}
+          onAdd={addItem}
+          warehouses={warehouses}
         />
-      )} */}
+      )}
     </>
   );
 }

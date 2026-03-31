@@ -1,6 +1,6 @@
 import { Trash2, Check, X } from "lucide-react";
 import { useNavigate } from "react-router";
-import { Item } from "../context/DataContext";
+import { Item } from "../context/ItemsContext";
 
 interface DataTableProps {
   items: Item[];

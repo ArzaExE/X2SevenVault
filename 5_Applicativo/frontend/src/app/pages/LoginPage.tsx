@@ -11,8 +11,16 @@ export function LoginPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
-  const { login, user, loginAsGuest } = useAuth();
+  const { login, user, loginAsGuest, authLoading } = useAuth();
   const navigate = useNavigate();
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+        <p className="text-zinc-400">Loading...</p>
+      </div>
+    );
+  }
 
   if (user) {
     return <Navigate to="/" replace />;
@@ -28,7 +36,7 @@ export function LoginPage() {
       setError("");
 
       try {
-          await login(email, password);
+        await login(email, password);
       } catch (err: any) {
           switch (err.code) {
               case 'auth/invalid-credential':

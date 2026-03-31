@@ -30,50 +30,68 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [isGuest, setIsGuest] = useState(false);
     const [token, setToken] = useState<string | null>(null);
 
-    // 🔹 RIPRISTINO AL REFRESH
-    useEffect(() => {
-        const guest = localStorage.getItem("guest") === "true";
-        setIsGuest(guest);
-        setAuthLoading(false);
-    }, []);
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+
+            const guest = localStorage.getItem("guest") === "true";
+            setIsGuest(guest);
+
+            // 👉 CASO GUEST → niente API
+            if (guest) {
+                setUser(null);
+                setProfile(null);
+                setAuthLoading(false);
+                return;
+            }
+
+            // 👉 CASO LOGGATO
             if (firebaseUser) {
                 setUser(firebaseUser);
+
                 try {
                     const response = await api.get('/me');
                     setProfile(response.data);
                 } catch (error) {
                     console.error('Error loading profile:', error);
+                    setUser(null);
+                    setProfile(null);
+                } finally {
+                    setAuthLoading(false);
                 }
-            } else {
+            } 
+            // 👉 CASO NON LOGGATO
+            else {
                 setUser(null);
                 setProfile(null);
+                setAuthLoading(false);
             }
-            setAuthLoading(false);
         });
 
         return () => unsubscribe();
     }, []);
 
     const login = async (email: string, password: string): Promise<void> => {
+        setAuthLoading(true);
         await signInWithEmailAndPassword(auth, email, password);
     };
 
     const loginAsGuest = () => {
-        // Salvo in localStorage che sei guest
         localStorage.setItem("guest", "true");
         setIsGuest(true);
+        setUser(null);
+        setProfile(null);
     };
 
     const logout = async (): Promise<void> => {
         await signOut(auth);
+        localStorage.removeItem("guest"); 
+        setIsGuest(false);                
     };
 
     return (
         <AuthContext.Provider value={{ user, profile, isGuest, authLoading, login, loginAsGuest, logout  }}>
-            {!authLoading && children}
+            {children}
         </AuthContext.Provider>
     );
 }

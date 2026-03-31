@@ -5,26 +5,36 @@ import { useAuth } from "../context/AuthContext";
 export function Sidebar() {
     const navigate = useNavigate();
     const location = useLocation();
-    const { profile, isGuest, logout } = useAuth();
+    const { profile, isGuest, logout, authLoading } = useAuth();
 
-    if (isGuest) return null; // Non mostrare la sidebar agli ospiti
 
     const allNavItems = [
         { id: "dashboard", label: "Dashboard", icon: Home, path: "/", roles: ["admin", "operator"] },
-        { id: "objects", label: "Objects", icon: Package, path: "/objects", roles: ["admin", "operator"] },
+        { id: "objects", label: "Objects", icon: Package, path: "/objects", roles: ["admin", "operator", "guest"] },
         { id: "warehouse", label: "Warehouse", icon: Warehouse, path: "/warehouse", roles: ["admin", "operator"] },
         { id: "users", label: "Users", icon: Users, path: "/users", roles: ["admin"] },
         { id: "settings", label: "Settings", icon: Settings, path: "/settings", roles: ["admin", "operator"] },
     ];
 
+    const role = profile?.role ?? (isGuest ? "guest" : "");
+
     const navItems = allNavItems.filter((item) =>
-        item.roles.includes(profile?.role ?? "")
+        role ? item.roles.includes(role) : false
     );
 
     const handleLogout = async () => {
         await logout();
         navigate("/login");
     };
+
+    if (authLoading) {
+        console.log("Auth loading...");
+        return (
+        <div className="flex items-center justify-center h-full">
+            <p className="text-zinc-400 text-lg">Loading...</p>
+        </div>
+        );
+    }
 
     return (
         <div className="w-64 bg-zinc-900 border-r border-zinc-800 flex flex-col h-screen">
@@ -71,11 +81,11 @@ export function Sidebar() {
                 <div className="flex items-center gap-3 px-4 py-2 mb-2">
                     <div className="w-8 h-8 bg-zinc-700 rounded-full flex items-center justify-center">
                         <span className="text-white text-sm font-medium">
-                            {profile?.name?.charAt(0) ?? "U"}
+                            {profile?.name?.charAt(0) ?? "G"}
                         </span>
                     </div>
                     <div className="flex-1 min-w-0">
-                        <p className="text-white text-sm font-medium truncate">{profile?.name}</p>
+                        <p className="text-white text-sm font-medium truncate">{!profile?.name ? "Guest User" : profile?.name}</p>
                         <p className="text-zinc-400 text-xs truncate">{profile?.email}</p>
                     </div>
                 </div>

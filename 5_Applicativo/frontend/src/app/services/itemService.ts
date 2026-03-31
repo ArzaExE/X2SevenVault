@@ -1,5 +1,5 @@
 import api from "../config/axios";
-import { Item } from "../context/DataContext";
+import { Item } from "../context/ItemsContext";
 
 // 🔹 GET ALL
 export const getItems = () => {

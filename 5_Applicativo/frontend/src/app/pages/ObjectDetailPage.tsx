@@ -1,5 +1,5 @@
 import { useParams, useNavigate, Navigate } from "react-router";
-import { Item, useData } from "../context/DataContext";
+import { Item, useItems } from "../context/ItemsContext";
 import { useAuth } from "../context/AuthContext";
 import { ArrowLeft, Package, MapPin, Layers, Weight, Ruler, Maximize, Bot, Edit, Hash } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -8,7 +8,7 @@ import { updateItem } from "../services/itemService";
 export function ObjectDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { getItemById, warehouseCount, deleteItem, loading } = useData();
+  const { getItemById, warehouseCount, deleteItem, itemLoading } = useItems();
   const [item, setItem] = useState<Item | null>(null);
   const { user, isGuest, authLoading } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
@@ -20,15 +20,13 @@ export function ObjectDetailPage() {
   useEffect(() => {
     const fetchItem = async () => {
       if (!id) return;
-
       const data = await getItemById(id);
       setItem(data);
-
       setLoadingItem(false);
     };
 
     fetchItem();
-  }, [id]);
+  }, [id, getItemById]);
 
   useEffect(() => {
     if (!item) return;
@@ -36,9 +34,12 @@ export function ObjectDetailPage() {
     setEditForm({
       name: item.name,
       description: item.description,
-      weight: item.weight,
-      width: item.width,
-      height: item.height,
+      weight_value: item.weight_value,
+      weight_unit: item.weight_unit,
+      width_unit: item.width_unit,
+      width_value: item.width_value,
+      height_unit: item.height_unit,
+      height_value: item.height_value,
       quantity: item.quantity,
       ai: item.is_ai,
     });
@@ -47,9 +48,12 @@ export function ObjectDetailPage() {
   const [editForm, setEditForm] = useState({
     name: "",
     description: "",
-    weight: 0,
-    width: 0,
-    height: 0,
+    weight_unit: "",
+    weight_value: 0,
+    width_unit: "",
+    width_value: 0,
+    height_unit: "",
+    height_value: 0,
     quantity: 0,
     ai: false,
   });
@@ -94,9 +98,12 @@ export function ObjectDetailPage() {
     setEditForm({
       name: item.name,
       description: item.description,
-      weight: item.weight,
-      width: item.width,
-      height: item.height,
+      weight_value: item.weight_value,
+      weight_unit: item.weight_unit,
+      width_unit: item.width_unit,
+      width_value: item.width_value,
+      height_unit: item.height_unit,
+      height_value: item.height_value,
       quantity: item.quantity,
       ai: item.is_ai,
     });
@@ -236,12 +243,12 @@ export function ObjectDetailPage() {
                     <input
                       type="number"
                       step="0.1"
-                      value={editForm.weight}
-                      onChange={(e) => setEditForm({ ...editForm, weight: parseFloat(e.target.value) })}
+                      value={editForm.weight_value}
+                      onChange={(e) => setEditForm({ ...editForm, weight_value: parseFloat(e.target.value) })}
                       className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-1 text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
                     />
                   ) : (
-                    <p className="text-white font-medium">{item.weight} kg</p>
+                    <p className="text-white font-medium">{item.weight_value} {item.weight_unit}</p>
                   )}
                 </div>
               </div>
@@ -253,12 +260,12 @@ export function ObjectDetailPage() {
                     <input
                       type="number"
                       step="0.1"
-                      value={editForm.width}
-                      onChange={(e) => setEditForm({ ...editForm, width: parseFloat(e.target.value) })}
+                      value={editForm.width_value}
+                      onChange={(e) => setEditForm({ ...editForm, width_value: parseFloat(e.target.value) })}
                       className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-1 text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
                     />
                   ) : (
-                    <p className="text-white font-medium">{item.width} cm</p>
+                    <p className="text-white font-medium">{item.width_value} {item.width_unit}</p>
                   )}
                 </div>
               </div>
@@ -270,12 +277,12 @@ export function ObjectDetailPage() {
                     <input
                       type="number"
                       step="0.1"
-                      value={editForm.height}
-                      onChange={(e) => setEditForm({ ...editForm, height: parseFloat(e.target.value) })}
+                      value={editForm.height_value}
+                      onChange={(e) => setEditForm({ ...editForm, height_value: parseFloat(e.target.value) })}
                       className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-1 text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
                     />
                   ) : (
-                    <p className="text-white font-medium">{item.height} cm</p>
+                    <p className="text-white font-medium">{item.height_value} {item.height_unit}</p>
                   )}
                 </div>
               </div>

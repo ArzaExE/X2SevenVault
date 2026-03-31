@@ -136,6 +136,7 @@ class WarehouseController extends Controller
     private function formatWarehouse(array $warehouse): array
     {
         return [
+            'id'          => $warehouse['id'],
             'name'        => $warehouse['name'],
             'description' => $warehouse['description'] ?? null,
             'is_active'   => $warehouse['is_active'],
