@@ -16,6 +16,7 @@ export interface Item {
   warehouse_id: string;
   aisle_id: string;
   shelf_id: string;
+  ai_class_id?: string;
   is_ai: boolean;
   weight_value: number;
   weight_unit: string;
@@ -59,10 +60,12 @@ export interface Warehouse {
 interface ItemContextType {
   items: Item[];
   warehouses: Warehouse[];
+  loadAisles: (warehouseId: string) => Promise<Aisle[]>;
+  loadShelves: (warehouseId: string, aisleId: string) => Promise<Shelf[]>;
   getItemById: (id: string) => Promise<Item | null>;
-  addItem: (data: Omit<Item, "id">) => Promise<void>;
-  updateItem: (id: string, data: Partial<Item>) => Promise<void>;
-  deleteItem: (id: string) => Promise<void>;
+  addItem: (data: Omit<Item, "id">) => Promise<any>;
+  updateItem: (id: string, data: Partial<Item>) => Promise<any>;
+  deleteItem: (id: string) => Promise<any>;
   warehouseCount: number;
   itemLoading: boolean;
   warehouseLoading: boolean;
@@ -82,16 +85,36 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const { user, isGuest } = useAuth();
 
-  // 🔹 LOAD iniziale
-  useEffect(() => {
-    if (user || isGuest) {
-        loadItems();
-        loadWarehouses();
-    } else {
-        setItemLoading(false);
-        setWarehouseLoading(false);
+useEffect(() => {
+  const loadInitialData = async () => {
+    // Iniziamo mettendo tutto in loading
+    setItemLoading(true);
+    setWarehouseLoading(true);
+
+    try {
+      // 1. Aspetta il caricamento degli items se c'è sessione
+      if (user || isGuest) {
+        // Usa await qui per bloccare l'esecuzione finché non finisce getItems
+        const res = await getItems();
+        setItems(res.data);
+      }
+
+      // 2. Aspetta le Warehouse se non è guest
+      if (user && !isGuest) {
+        const warehouseRes = await getWarehouses();
+        setWarehouses(warehouseRes.data);
+      }
+    } catch (err) {
+      console.error("Initialization error:", err);
+    } finally {
+      // SOLO ORA spegniamo i caricamenti, tutti insieme
+      setItemLoading(false);
+      setWarehouseLoading(false);
     }
-  }, [user, isGuest]);
+  };
+
+  loadInitialData();
+}, [user, isGuest]);
 
   const loadItems = async () => {
     try {
@@ -100,47 +123,40 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
       setItems(res.data);
     } catch (err) {
       console.error("Error loading items:", err);
-    } finally {
-      setItemLoading(false);
     }
   };
 
   const loadWarehouses = async () => {
       try {
-          // 1. Carica tutti i warehouse
           const warehouseRes = await getWarehouses();
           const warehouseList = warehouseRes.data;
 
-          // 2. Per ogni warehouse carica le aisles
-          const warehousesWithAisles = await Promise.all(
-              warehouseList.map(async (wh: any) => {
-                  const aisleRes = await getAisles(wh.id);
-                  const aisles = aisleRes.data;
-
-                  // 3. Per ogni aisle carica gli shelves
-                  const aislesWithShelves = await Promise.all(
-                      aisles.map(async (aisle: any) => {
-                          const shelfRes = await getShelves(wh.id, aisle.id);
-                          return {
-                              ...aisle,
-                              shelves: shelfRes.data, // array di shelf objects
-                          };
-                      })
-                  );
-
-                  return {
-                      ...wh,
-                      aisles: aislesWithShelves,
-                  };
-              })
-          );
-
-          setWarehouses(warehousesWithAisles);
+          setWarehouses(warehouseList);
       } catch (err) {
           console.error("Error loading warehouses:", err);
-      } finally {
-          setWarehouseLoading(false);
       }
+  };
+
+
+  const loadAisles = async (warehouseId: string): Promise<Aisle[]> => {
+    try {
+      const res = await getAisles(warehouseId);
+      return res.data;
+    } catch (err) {
+      console.error("Error loading aisles:", err);
+      return [];
+    }
+  };
+
+  // Funzione per caricare gli scaffali di una specifica corsia
+  const loadShelves = async (warehouseId: string, aisleId: string): Promise<Shelf[]> => {
+    try {
+      const res = await getShelves(warehouseId, aisleId);
+      return res.data;
+    } catch (err) {
+      console.error("Error loading shelves:", err);
+      return [];
+    }
   };
 
   const getItemById = async (id: string): Promise<Item | null> => {
@@ -157,8 +173,10 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
     try {
       const res = await createItem(data);
       setItems((prev) => [...prev, res.data]);
+      return { success: true };
     } catch (err) {
       console.error("Error creating item:", err);
+      throw err;
     }
   };
 
@@ -168,8 +186,10 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
       setItems((prev) =>
         prev.map((item) => (item.id === id ? res.data : item))
       );
+      return { success: true };
     } catch (err) {
       console.error("Error updating item:", err);
+      throw err;
     }
   };
 
@@ -177,8 +197,10 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
     try {
       await deleteItem(id);
       setItems((prev) => prev.filter((item) => item.id !== id));
+      return { success: true };
     } catch (err) {
       console.error("Error deleting item:", err);
+      throw err;
     }
   };
 
@@ -187,6 +209,8 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
       value={{
         items,
         warehouses,
+        loadAisles,
+        loadShelves,
         getItemById,
         addItem,
         updateItem: editItem,

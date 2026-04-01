@@ -5,25 +5,28 @@ import { useItems } from "../context/ItemsContext";
 import { useAuth } from "../context/AuthContext";
 import { Search, Plus } from "lucide-react";
 import { Navigate } from "react-router";
+import { toast } from "react-hot-toast";
 
 export function ObjectsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const { items, warehouses, warehouseCount, addItem, deleteItem, itemLoading } = useItems();
   const { user, isGuest, authLoading } = useAuth();
-  // const { warehouses } = useWarehouses();
+  const [error, setError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-
-  if (itemLoading || authLoading)
+  if (itemLoading || authLoading) {
     return (
       <div className="flex items-center justify-center h-full">
         <p className="text-zinc-400 text-lg">Loading...</p>
       </div>
     );
+  }
 
-  if (!user && !isGuest && !authLoading) {
+  if (!user && !isGuest) {
     return <Navigate to="/login" replace/>;
   }
+
 
   const filteredObjects = items.filter(
     (obj) =>
@@ -32,6 +35,23 @@ export function ObjectsPage() {
       obj.aisle_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       obj.shelf_id.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm("Are you sure you want to delete this object?")) return;
+    setError(null);
+    setIsDeleting(true);
+
+    try {
+      await deleteItem(id);
+      toast.success("Object deleted successfully");
+    } catch (err: any) {
+      const msg = err.response?.data?.message || "Error deleting object";
+      setError(msg);
+      toast.error(msg);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <>
@@ -99,18 +119,19 @@ export function ObjectsPage() {
         {/* Data Table */}
         <DataTable 
           items={filteredObjects} 
-          onDelete={isGuest ? () => {} : deleteItem} 
+          onDelete={isGuest ? async () => {} : handleDelete} 
           isReadOnly={isGuest} 
         />
       </div>
 
       {/* Add Object Dialog */}
-      {user && (
-        <AddObjectDialog
+      {/* Mostra il dialogo solo se NON è guest e se è aperto */}
+      {!isGuest && (
+        <AddObjectDialog 
           isOpen={isAddDialogOpen}
           onClose={() => setIsAddDialogOpen(false)}
           onAdd={addItem}
-          warehouses={warehouses}
+          warehouses={warehouses} // Ora sarà piena solo per gli utenti loggati
         />
       )}
     </>

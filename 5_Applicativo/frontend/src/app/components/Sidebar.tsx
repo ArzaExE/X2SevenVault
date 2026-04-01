@@ -28,7 +28,6 @@ export function Sidebar() {
     };
 
     if (authLoading) {
-        console.log("Auth loading...");
         return (
         <div className="flex items-center justify-center h-full">
             <p className="text-zinc-400 text-lg">Loading...</p>

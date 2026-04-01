@@ -130,6 +130,8 @@ class ItemController extends Controller
             return response()->json(['error' => 'Error while updating item'], 404);
         }
 
+        $item['id'] = $id;
+
         return response()->json($this->formatItem($item));
     }
 

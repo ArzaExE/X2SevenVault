@@ -1,22 +1,37 @@
 import { useParams, useNavigate, Navigate } from "react-router";
 import { Item, useItems } from "../context/ItemsContext";
 import { useAuth } from "../context/AuthContext";
-import { ArrowLeft, Package, MapPin, Layers, Weight, Ruler, Maximize, Bot, Edit, Hash } from "lucide-react";
+import { ArrowLeft, Package, MapPin, Layers, Weight, Ruler, Maximize, Bot, Edit, Hash, BrainCircuit } from "lucide-react";
 import { useEffect, useState } from "react";
-import { updateItem } from "../services/itemService";
+import { toast } from "react-hot-toast";
 
 export function ObjectDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { getItemById, warehouseCount, deleteItem, itemLoading } = useItems();
+  const { getItemById, warehouseCount, deleteItem, itemLoading, updateItem } = useItems();
   const [item, setItem] = useState<Item | null>(null);
   const { user, isGuest, authLoading } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [loadingItem, setLoadingItem] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  if (itemLoading || authLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <p className="text-zinc-400 text-lg">Loading...</p>
+      </div>
+    );
+  }
+
+  if (!user && !isGuest) {
+    return <Navigate to="/login" replace/>;
+  }
 
   const handleGuest = () => {
     navigate("/objects");
   };
+
   useEffect(() => {
     const fetchItem = async () => {
       if (!id) return;
@@ -32,8 +47,9 @@ export function ObjectDetailPage() {
     if (!item) return;
 
     setEditForm({
+      id: item.id,
       name: item.name,
-      description: item.description,
+      description: item.description || "",
       weight_value: item.weight_value,
       weight_unit: item.weight_unit,
       width_unit: item.width_unit,
@@ -46,6 +62,7 @@ export function ObjectDetailPage() {
   }, [item]);
 
   const [editForm, setEditForm] = useState({
+    id: "",
     name: "",
     description: "",
     weight_unit: "",
@@ -89,15 +106,45 @@ export function ObjectDetailPage() {
 
   const location = `${item.warehouse_id}, ${item.aisle_id}-${item.shelf_id}`;
 
-  const handleSave = () => {
-    updateItem(item.id, editForm);
-    setIsEditing(false);
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setIsSubmitting(true);
+
+    try {
+      await updateItem(item.id, editForm);
+
+      const updatedData = await getItemById(item.id);
+      if (updatedData) 
+        setItem(updatedData);
+        toast.success("Object updated successfully!");
+        setIsEditing(false);
+    } catch (err: any) {
+      // Estraiamo il messaggio di errore dal server (Axios mette la risposta in err.response)
+      const serverMessage = err.response?.data?.message || 
+                            err.response?.data?.error || 
+                            "An unexpected error occurred. Please check your data.";
+      setError(serverMessage);
+      // Se il server ritorna errori specifici per campo (Laravel style)
+      const validationErrors = err.response?.data?.errors;
+      if (validationErrors) {
+        const firstError = Object.values(validationErrors)[0] as string[];
+        setError(firstError[0]); // Mostriamo il primo errore di validazione trovato
+      } else {
+        const msg = err.response?.data?.message || "Error adding object. Please try again.";
+        setError(msg);
+        toast.error("Errore: " + msg);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleCancel = () => {
     setEditForm({
+      id: item.id,
       name: item.name,
-      description: item.description,
+      description: item.description || "",
       weight_value: item.weight_value,
       weight_unit: item.weight_unit,
       width_unit: item.width_unit,
@@ -156,9 +203,17 @@ export function ObjectDetailPage() {
                     </button>
                     <button
                       onClick={handleSave}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      disabled={isSubmitting}
+                      className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-70 disabled:cursor-not-allowed min-w-[140px] whitespace-nowrap"
                     >
-                      Save Changes
+                      {isSubmitting ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin shrink-0" />
+                          <span>Saving...</span>
+                        </>
+                      ) : (
+                        "Save Changes"
+                      )}
                     </button>
                   </>
                 ) : (
@@ -308,6 +363,21 @@ export function ObjectDetailPage() {
             </div>
           </div>
 
+          <div className="md:col-span-2 bg-zinc-900 border border-zinc-800 rounded-lg p-6">
+            <div className="flex items-center gap-2 mb-2">
+              <BrainCircuit className="w-4 h-4 text-blue-400" />
+              <label className="block text-sm font-medium text-zinc-400">AI Identifier (AI ID)</label>
+            </div>
+            <div className="bg-zinc-800/50 border border-zinc-700 rounded px-4 py-3">
+              <code className="text-blue-300 font-mono text-sm">
+                {item.ai_class_id || "Not assigned"}
+              </code>
+            </div>
+            <p className="text-xs text-zinc-500 mt-2">
+              This is the unique identifier used by the AI engine to process this object.
+            </p>
+          </div>
+
           {/* Description */}
           <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 lg:col-span-2">
             <h2 className="text-white text-lg font-semibold mb-4">Description</h2>
@@ -320,7 +390,7 @@ export function ObjectDetailPage() {
                 placeholder="Enter object description"
               />
             ) : (
-              <p className="text-zinc-300 leading-relaxed">{item.description}</p>
+              <p className="text-zinc-300 leading-relaxed">{item.description || "No description available"}</p>
             )}
           </div>
         </div>

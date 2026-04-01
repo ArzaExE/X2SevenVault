@@ -1,16 +1,25 @@
+import { Navigate } from "react-router";
+import { useAuth } from "../context/AuthContext";
 import { useItems } from "../context/ItemsContext";
 import { Package, Warehouse, Bot } from "lucide-react";
 
 export function DashboardPage() {
-  const { items, warehouses } = useItems();
+  const { items, warehouses, itemLoading, warehouseLoading } = useItems();
+  const { user, isGuest, authLoading } = useAuth();
+
+  if (itemLoading || authLoading || warehouseLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <p className="text-zinc-400 text-lg">Loading...</p>
+      </div>
+    );
+  }
+
+  if (!user && !isGuest) {
+    return <Navigate to="/login" replace/>;
+  }
 
   const aiEnabledCount = items.filter((obj) => obj.is_ai).length;
-  const totalLocations = warehouses.reduce(
-    (sum, wh) => sum + wh.aisles.reduce((s, a) => s + a.shelves.length, 0),
-    0
-  );
-  const occupiedLocations = new Set(items.map((obj) => `${obj.warehouse_id}-${obj.aisle_id}-${obj.shelf_id}`)).size;
-  const capacityPercentage = totalLocations > 0 ? Math.round((occupiedLocations / totalLocations) * 100) : 0;
 
   return (
     <>

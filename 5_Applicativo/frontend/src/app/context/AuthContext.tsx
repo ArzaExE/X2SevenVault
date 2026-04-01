@@ -37,6 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const guest = localStorage.getItem("guest") === "true";
             setIsGuest(guest);
 
+
             // 👉 CASO GUEST → niente API
             if (guest) {
                 setUser(null);
@@ -60,7 +61,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     setAuthLoading(false);
                 }
             } 
-            // 👉 CASO NON LOGGATO
             else {
                 setUser(null);
                 setProfile(null);
@@ -72,21 +72,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const login = async (email: string, password: string): Promise<void> => {
-        setAuthLoading(true);
-        await signInWithEmailAndPassword(auth, email, password);
+        try {
+            setAuthLoading(true);
+            await signInWithEmailAndPassword(auth, email, password);
+        } catch (error) {
+            setAuthLoading(false);
+            throw error;
+        }
     };
 
     const loginAsGuest = () => {
-        localStorage.setItem("guest", "true");
-        setIsGuest(true);
-        setUser(null);
-        setProfile(null);
+        try {
+            setAuthLoading(true);
+            localStorage.setItem("guest", "true");
+            setIsGuest(true);
+            setUser(null);
+            setProfile(null);
+        } finally {
+            setAuthLoading(false); 
+        }
     };
 
     const logout = async (): Promise<void> => {
-        await signOut(auth);
-        localStorage.removeItem("guest"); 
-        setIsGuest(false);                
+        try {
+            await signOut(auth);
+            localStorage.removeItem("guest"); 
+            setIsGuest(false);
+        } finally {
+            setAuthLoading(false);
+            console.log("User logged out: ", authLoading);
+        }
     };
 
     return (
