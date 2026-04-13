@@ -118,6 +118,8 @@ class ShelfController extends Controller
 
         $shelf['warehouse_id'] = $warehouseId;
         $shelf['aisle_id'] = $aisleId;
+        $shelf['id'] = $shelfId;
+
 
         return response()->json($this->formatShelf($shelf));
     }

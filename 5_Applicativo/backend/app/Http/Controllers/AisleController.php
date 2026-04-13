@@ -114,6 +114,7 @@ class AisleController extends Controller
             return response()->json(['error' => 'Error while updating aisle'], 500);
         }
 
+        $aisle['id'] = $aisleId;
         $aisle['warehouse_id'] = $warehouseId;
 
         return response()->json($this->formatAisle($aisle));

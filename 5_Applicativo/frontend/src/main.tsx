@@ -4,14 +4,20 @@ import "./styles/index.css";
 import { StrictMode } from 'react'
 import { AuthProvider } from './app/context/AuthContext.tsx'
 import { ItemsProvider } from "./app/context/ItemsContext.tsx";
+import { WarehousesProvider } from "./app/context/WarehousesContext.tsx";
+import { UsersProvider } from "./app/context/UsersContext.tsx";
 // import { DataProvider } from './app/data/store.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AuthProvider>
-      <ItemsProvider>
-        <App />
-      </ItemsProvider>
+      <UsersProvider>
+        <WarehousesProvider>
+          <ItemsProvider>
+            <App />
+          </ItemsProvider>
+        </WarehousesProvider>
+      </UsersProvider>
     </AuthProvider>
   </StrictMode>
 );

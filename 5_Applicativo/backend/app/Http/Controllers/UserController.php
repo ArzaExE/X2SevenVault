@@ -178,6 +178,10 @@ class UserController extends Controller
             $user['full_name'] = $validated['full_name'];
         }
 
+        if (isset($validated['email'])) {
+            $user['email'] = $validated['email'];
+        }
+
         if (isset($validated['role_name'])) {
             $user['role'] = [
                 'role_id'     => $validated['role_id'],
@@ -205,6 +209,8 @@ class UserController extends Controller
         if (!$set) {
             return response()->json(['error' => 'Error while saving user'], 404);
         }
+
+        $user['id'] = $id;
 
         return response()->json($this->formatUser($user));
     }
@@ -264,6 +270,7 @@ class UserController extends Controller
     private function formatUser(array $user): array
     {
         return [
+            'id'        => $user['id'],
             'email'     => $user['email'],
             'name'      => $user['full_name'],
             'role'      => $user['role']['role_name'],

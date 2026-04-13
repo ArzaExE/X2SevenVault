@@ -24,6 +24,7 @@ class UserUpdateRequest extends FormRequest
     {
         // TODO: Review rules
         return [
+            'email'     => 'sometimes|email',
             'full_name' => 'sometimes|string',
             'role_id'   => 'sometimes|integer',
             'role_name' => 'sometimes|string',

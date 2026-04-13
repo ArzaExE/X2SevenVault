@@ -109,6 +109,8 @@ class WarehouseController extends Controller
             return response()->json(['error' => 'Error while updating warehouse'], 500);
         }
 
+        $warehouse['id'] = $warehouseId;
+
         return response()->json($this->formatWarehouse($warehouse));
     }
 

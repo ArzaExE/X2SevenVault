@@ -85,36 +85,36 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const { user, isGuest } = useAuth();
 
-useEffect(() => {
-  const loadInitialData = async () => {
-    // Iniziamo mettendo tutto in loading
-    setItemLoading(true);
-    setWarehouseLoading(true);
+  useEffect(() => {
+    const loadInitialData = async () => {
+      // Iniziamo mettendo tutto in loading
+      setItemLoading(true);
+      setWarehouseLoading(true);
 
-    try {
-      // 1. Aspetta il caricamento degli items se c'è sessione
-      if (user || isGuest) {
-        // Usa await qui per bloccare l'esecuzione finché non finisce getItems
-        const res = await getItems();
-        setItems(res.data);
+      try {
+        // 1. Aspetta il caricamento degli items se c'è sessione
+        if (user || isGuest) {
+          // Usa await qui per bloccare l'esecuzione finché non finisce getItems
+          const res = await getItems();
+          setItems(res.data);
+        }
+
+        // 2. Aspetta le Warehouse se non è guest
+        if (user && !isGuest) {
+          const warehouseRes = await getWarehouses();
+          setWarehouses(warehouseRes.data);
+        }
+      } catch (err) {
+        console.error("Initialization error:", err);
+      } finally {
+        // SOLO ORA spegniamo i caricamenti, tutti insieme
+        setItemLoading(false);
+        setWarehouseLoading(false);
       }
+    };
 
-      // 2. Aspetta le Warehouse se non è guest
-      if (user && !isGuest) {
-        const warehouseRes = await getWarehouses();
-        setWarehouses(warehouseRes.data);
-      }
-    } catch (err) {
-      console.error("Initialization error:", err);
-    } finally {
-      // SOLO ORA spegniamo i caricamenti, tutti insieme
-      setItemLoading(false);
-      setWarehouseLoading(false);
-    }
-  };
-
-  loadInitialData();
-}, [user, isGuest]);
+    loadInitialData();
+  }, [user, isGuest]);
 
   const loadItems = async () => {
     try {
