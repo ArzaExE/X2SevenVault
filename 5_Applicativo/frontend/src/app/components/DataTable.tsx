@@ -58,7 +58,7 @@ export function DataTable({ items, onDelete, isReadOnly = false }: DataTableProp
                 >
                   <td className="px-6 py-4 text-white">{item.name}</td>
                   <td className="px-6 py-4 text-zinc-300">
-                    {item.warehouse_id}-{item.shelf_id}
+                    {item.warehouse_id}, {item.aisle_id}-{item.shelf_id}
                   </td>
                   <td className="px-6 py-4 text-zinc-300">{item.quantity}</td>
                   <td className="px-6 py-4">

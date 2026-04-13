@@ -57,7 +57,7 @@ export function ObjectDetailPage() {
       height_unit: item.height_unit,
       height_value: item.height_value,
       quantity: item.quantity,
-      ai: item.is_ai,
+      is_ai: item.is_ai,
     });
   }, [item]);
 
@@ -72,7 +72,7 @@ export function ObjectDetailPage() {
     height_unit: "",
     height_value: 0,
     quantity: 0,
-    ai: false,
+    is_ai: false,
   });
 
   if (authLoading || loadingItem) {
@@ -152,10 +152,23 @@ export function ObjectDetailPage() {
       height_unit: item.height_unit,
       height_value: item.height_value,
       quantity: item.quantity,
-      ai: item.is_ai,
+      is_ai: item.is_ai,
     });
     setIsEditing(false);
   };
+
+function ActiveToggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <label className="flex items-center gap-3 cursor-pointer">
+      <div className="relative">
+        <input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)} className="sr-only" />
+        <div className={`w-10 h-6 rounded-full transition-colors ${checked ? "bg-blue-600" : "bg-zinc-600"}`} />
+        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${checked ? "translate-x-5" : "translate-x-1"}`} />
+      </div>
+      <span className="text-sm text-zinc-300">Enable AI</span>
+    </label>
+  );
+}
 
   return (
     <>
@@ -346,15 +359,12 @@ export function ObjectDetailPage() {
                 <div className="flex-1">
                   <p className="text-zinc-400 text-sm">AI Features</p>
                   {isEditing ? (
-                    <label className="flex items-center gap-2 mt-1 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={editForm.ai}
-                        onChange={(e) => setEditForm({ ...editForm, ai: e.target.checked })}
-                        className="w-5 h-5 bg-zinc-800 border border-zinc-700 rounded text-blue-600 focus:ring-2 focus:ring-blue-600"
+                    <div className="md:col-span-2 mt-2">
+                      <ActiveToggle 
+                        checked={editForm.is_ai} 
+                        onChange={(is_ai) => setEditForm(prev => ({ ...prev, is_ai }))}
                       />
-                      <span className="text-white">Enable AI</span>
-                    </label>
+                    </div>
                   ) : (
                     <p className="text-white font-medium">{item.is_ai ? "Enabled" : "Disabled"}</p>
                   )}

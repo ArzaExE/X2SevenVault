@@ -10,7 +10,8 @@ use Illuminate\Http\Request;
 class ShelfController extends Controller
 {
     public function __construct(
-        protected FirestoreService $firestore
+        protected FirestoreService $firestore,
+        protected ItemController $itemController,
     ) {}
 
     /**
@@ -134,6 +135,12 @@ class ShelfController extends Controller
 
         if (!$shelf) {
             return response()->json(['error' => 'Shelf not found'], 404);
+        }
+
+        $items = $this->itemController->searchItems($warehouseId);
+
+        if($items) {
+            return response()->json(['error' => "Can't delete warehouse with items on it"], 500);
         }
 
         $delete = $this->firestore->deleteDocument("warehouse_management/{$warehouseId}/aisles/{$aisleId}/shelves", $shelfId);

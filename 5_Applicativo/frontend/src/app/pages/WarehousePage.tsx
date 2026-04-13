@@ -4,10 +4,21 @@ import { Plus, Trash2, Package, X, Edit, Info, Loader2 } from "lucide-react";
 import { toast } from "react-hot-toast";
 
 const extractError = (err: any): string => {
-  const detail = err.response?.data?.detail;
-  if (Array.isArray(detail)) return detail.map((d: { msg: string }) => d.msg).join(", ");
-  if (typeof detail === "string") return detail;
-  return err.response?.data?.message ?? err.message ?? "An unexpected error occurred.";
+  const data = err.response?.data;
+
+  // 1. Controlla la chiave 'error' (quella che usi in Laravel)
+  if (data?.error) return data.error;
+
+  // 2. Controlla 'detail' (spesso usato da FastAPI o librerie di validazione)
+  if (data?.detail) {
+    if (Array.isArray(data.detail)) {
+      return data.detail.map((d: { msg: string }) => d.msg).join(", ");
+    }
+    return data.detail;
+  }
+
+  // 3. Fallback su 'message' (standard Laravel per eccezioni non gestite) o errore generico
+  return data?.message ?? err.message ?? "An unexpected error occurred.";
 };
 
 const inputCls = "w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-600";
@@ -442,7 +453,7 @@ export function WarehousePage() {
       {isAddWarehouseOpen && (
         <Dialog title="Add New Warehouse" onClose={() => setIsAddWarehouseOpen(false)}>
           <form onSubmit={handleAddWarehouse} className="p-6 space-y-4">
-            <Field label="Warehouse ID" hint="Must start with 'WH_' followed by letters or numbers. Example: WH_001, WH_MAIN">
+            <Field label="Warehouse ID*" hint="Must start with 'WH_' followed by letters or numbers. Example: WH_001, WH_MAIN">
               <input
                 value={newWarehouse.id}
                 onChange={e => setNewWarehouse(f => ({ ...f, id: e.target.value }))}
@@ -452,7 +463,7 @@ export function WarehousePage() {
                 required
               />
             </Field>
-            <Field label="Name">
+            <Field label="Name*">
               <input value={newWarehouse.name} onChange={e => setNewWarehouse(f => ({ ...f, name: e.target.value }))}
                 className={inputCls} placeholder="e.g. Main Warehouse" required />
             </Field>
@@ -493,7 +504,7 @@ export function WarehousePage() {
       {isAddAisleOpen && (
         <Dialog title="Add New Aisle" onClose={() => setIsAddAisleOpen(false)}>
           <form onSubmit={handleAddAisle} className="p-6 space-y-4">
-            <Field label="Aisle ID" hint="Must start with an uppercase letter followed by numbers. Example: A1, B12, C3">
+            <Field label="Aisle ID*" hint="Must start with an uppercase letter followed by numbers. Example: A1, B12, C3">
               <input
                 value={newAisle.id}
                 onChange={e => setNewAisle(f => ({ ...f, id: e.target.value }))}
@@ -503,7 +514,7 @@ export function WarehousePage() {
                 required
               />
             </Field>
-            <Field label="Name">
+            <Field label="Name*">
               <input value={newAisle.name} onChange={e => setNewAisle(f => ({ ...f, name: e.target.value }))}
                 className={inputCls} placeholder="e.g. Aisle A" required />
             </Field>
@@ -544,7 +555,7 @@ export function WarehousePage() {
       {isAddShelfOpen && (
         <Dialog title="Add New Shelf" onClose={() => setIsAddShelfOpen(false)}>
           <form onSubmit={handleAddShelf} className="p-6 space-y-4">
-            <Field label="Shelf ID" hint="Must start with an uppercase letter followed by numbers. Example: A1, B12, C3">
+            <Field label="Shelf ID*" hint="Must start with an uppercase letter followed by numbers. Example: A1, B12, C3">
               <input
                 value={newShelf.id}
                 onChange={e => setNewShelf(f => ({ ...f, id: e.target.value }))}
@@ -554,7 +565,7 @@ export function WarehousePage() {
                 required
               />
             </Field>
-            <Field label="Name">
+            <Field label="Name*">
               <input value={newShelf.name} onChange={e => setNewShelf(f => ({ ...f, name: e.target.value }))}
                 className={inputCls} placeholder="e.g. Shelf 01" required />
             </Field>

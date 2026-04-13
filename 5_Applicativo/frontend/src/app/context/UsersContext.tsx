@@ -4,7 +4,9 @@ import {
   getUserById as fetchUserById, 
   deleteUser,
   createUser,
-  updateUser
+  updateUser,
+  getMe as fetchMe, // Assicurati di aggiungere queste nel tuo userService
+  updatePassword as updatePasswordApi
 } 
 from "../services/userService";
 import { useAuth } from "./AuthContext";
@@ -31,9 +33,11 @@ interface UserContextType {
   roles: Role[];
   // loadUsers: () => Promise<User[]>;
   getUserById: (id: string) => Promise<User | null>;
+  getMe: () => Promise<User>; // Metodo per i settings
   createUser: (data: Omit<User, "id">) => Promise<any>;
   updateUser: (id: string, data: Partial<User>) => Promise<any>;
   deleteUser: (id: string) => Promise<any>;
+  updatePassword: (password: string, passwordConfirmation: string) => Promise<any>;
   userLoading: boolean;
 }
 
@@ -120,6 +124,37 @@ export function UsersProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Recupera i dati del profilo (usato in Settings)
+  const getMe = async (): Promise<User> => {
+    try {
+      const res = await fetchMe();
+      const u = res.data;
+      return {
+        id: u.id,
+        email: u.email,
+        full_name: u.name ?? u.full_name ?? "",
+        role_name: u.role ?? "",
+        role_id: u.role_id ?? 0,
+        is_active: u.is_active ?? true,
+      };
+    } catch (err) {
+      console.error("Error fetching me:", err);
+      throw err;
+    }
+  };
+
+  // Aggiorna la password (usato in Settings)
+  const updatePassword = async (password: string, passwordConfirmation: string) => {
+    try {
+      // Passiamo entrambi i valori
+      const res = await updatePasswordApi(password, passwordConfirmation);
+      return res.data;
+    } catch (err) {
+      console.error("Error updating password:", err);
+      throw err;
+    }
+  };
+
   const editUser = async (id: string, data: Partial<User>) => {
     try {
         const res = await updateUser(id, data);
@@ -133,10 +168,10 @@ export function UsersProvider({ children }: { children: ReactNode }) {
           is_active: raw.is_active ?? true,
         };
         setUsers((prev) => prev.map((u) => (u.id === id ? mapped : u)));
-        return { success: true };
+        return mapped; // Ritorna il dato mappato così la pagina Settings può aggiornarsi
     } catch (err) {
-      console.error("Error updating user:", err);
-      throw err;
+        console.error("Error updating user:", err);
+        throw err;
     }
   };
 
@@ -156,11 +191,12 @@ export function UsersProvider({ children }: { children: ReactNode }) {
       value={{
         users,
         roles,
-        // loadUsers,
         getUserById,
+        getMe,
         createUser: addUser,
         updateUser: editUser,
         deleteUser: removeUser,
+        updatePassword,
         userLoading
       }}
     >

@@ -6,10 +6,21 @@ import { toast } from "react-hot-toast";
 import { Navigate } from "react-router";
 
 const extractError = (err: any): string => {
-  const detail = err.response?.data?.detail;
-  if (Array.isArray(detail)) return detail.map((d: { msg: string }) => d.msg).join(", ");
-  if (typeof detail === "string") return detail;
-  return err.response?.data?.message ?? err.message ?? "An unexpected error occurred.";
+  const data = err.response?.data;
+
+  // 1. Controlla la chiave 'error' (quella che usi in Laravel)
+  if (data?.error) return data.error;
+
+  // 2. Controlla 'detail' (spesso usato da FastAPI o librerie di validazione)
+  if (data?.detail) {
+    if (Array.isArray(data.detail)) {
+      return data.detail.map((d: { msg: string }) => d.msg).join(", ");
+    }
+    return data.detail;
+  }
+
+  // 3. Fallback su 'message' (standard Laravel per eccezioni non gestite) o errore generico
+  return data?.message ?? err.message ?? "An unexpected error occurred.";
 };
 
 const inputCls = "w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-600";
@@ -49,7 +60,7 @@ function DialogForm({
         </div>
         <form onSubmit={onSubmit} className="p-6 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-2">Full Name</label>
+            <label className="block text-sm font-medium text-zinc-300 mb-2">Full Name*</label>
             <input
               type="text"
               value={formData.full_name}
@@ -60,7 +71,7 @@ function DialogForm({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-2">Email</label>
+            <label className="block text-sm font-medium text-zinc-300 mb-2">Email*</label>
             <input
               type="email"
               value={formData.email}
@@ -72,7 +83,7 @@ function DialogForm({
           </div>
           {showPassword && (
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-2">Password</label>
+              <label className="block text-sm font-medium text-zinc-300 mb-2">Password*</label>
               <input
                 type="password"
                 value={formData.password}
@@ -84,7 +95,7 @@ function DialogForm({
             </div>
           )}
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-2">Role</label>
+            <label className="block text-sm font-medium text-zinc-300 mb-2">Role*</label>
             <select
               value={formData.role_name}
               onChange={(e) => setFormData({

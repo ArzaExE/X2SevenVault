@@ -18,6 +18,7 @@ interface AuthContextType {
     login: (email: string, password: string) => Promise<void>;
     logout: () => Promise<void>;
     loginAsGuest: () => void;
+    refreshProfile: () => Promise<void>;
     isGuest: boolean;
 }
 
@@ -71,6 +72,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return () => unsubscribe();
     }, []);
 
+    const refreshProfile = async () => {
+        try {
+            const response = await api.get('/me');
+            // response.data deve corrispondere a UserProfile { user_id, email, name, role... }
+            setProfile(response.data);
+        } catch (error) {
+            console.error('Error refreshing profile:', error);
+        }
+    };
+
     const login = async (email: string, password: string): Promise<void> => {
         try {
             setAuthLoading(true);
@@ -105,7 +116,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     return (
-        <AuthContext.Provider value={{ user, profile, isGuest, authLoading, login, loginAsGuest, logout  }}>
+        <AuthContext.Provider 
+        value={{
+            user, 
+            profile, 
+            isGuest, 
+            authLoading, 
+            login, 
+            loginAsGuest, 
+            logout,
+            refreshProfile 
+            }}
+        >
             {children}
         </AuthContext.Provider>
     );

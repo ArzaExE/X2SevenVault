@@ -19,13 +19,13 @@ export function AddObjectDialog({ isOpen, onClose, onAdd, warehouses }: AddObjec
     aisle_id: "",
     shelf_id: "",
     is_ai: false,
-    weight_value: 0,
+    weight_value: "" as any,
     weight_unit: "kg",
-    width_value: 0,
+    width_value: "" as any,
     width_unit: "cm",
-    height_value: 0,
+    height_value: "" as any,
     height_unit: "cm",
-    quantity: 0,
+    quantity: "" as any,
     description: "",
   });
 
@@ -109,6 +109,19 @@ export function AddObjectDialog({ isOpen, onClose, onAdd, warehouses }: AddObjec
     }
   };
 
+  function AIToggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+    return (
+      <label className="flex items-center gap-3 cursor-pointer">
+        <div className="relative">
+          <input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)} className="sr-only" />
+          <div className={`w-10 h-6 rounded-full transition-colors ${checked ? "bg-blue-600" : "bg-zinc-600"}`} />
+          <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${checked ? "translate-x-5" : "translate-x-1"}`} />
+        </div>
+        <span className="text-sm text-zinc-300">Active AI</span>
+      </label>
+    );
+  }
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-zinc-900 rounded-lg w-full max-w-2xl border border-zinc-800 max-h-[90vh] overflow-y-auto">
@@ -124,7 +137,7 @@ export function AddObjectDialog({ isOpen, onClose, onAdd, warehouses }: AddObjec
             
             {/* Nome (Full Width) */}
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-zinc-300 mb-2">Object Name</label>
+              <label className="block text-sm font-medium text-zinc-300 mb-2">Object Name*</label>
               <input
                 type="text"
                 value={formData.name}
@@ -136,7 +149,7 @@ export function AddObjectDialog({ isOpen, onClose, onAdd, warehouses }: AddObjec
 
             {/* Warehouse, Aisle, Shelf */}
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-2">Warehouse</label>
+              <label className="block text-sm font-medium text-zinc-300 mb-2">Warehouse*</label>
               <select
                 value={formData.warehouse_id}
                 onChange={(e) => handleWarehouseChange(e.target.value)}
@@ -150,7 +163,7 @@ export function AddObjectDialog({ isOpen, onClose, onAdd, warehouses }: AddObjec
 
             <div className="grid grid-cols-2 gap-2">
                 <div>
-                    <label className="block text-sm font-medium text-zinc-300 mb-2">Aisle</label>
+                    <label className="block text-sm font-medium text-zinc-300 mb-2">Aisle*</label>
                     <select
                         value={formData.aisle_id}
                         onChange={(e) => handleAisleChange(formData.warehouse_id, e.target.value)}
@@ -163,7 +176,7 @@ export function AddObjectDialog({ isOpen, onClose, onAdd, warehouses }: AddObjec
                     </select>
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-zinc-300 mb-2">Shelf</label>
+                    <label className="block text-sm font-medium text-zinc-300 mb-2">Shelf*</label>
                     <select
                         value={formData.shelf_id}
                         onChange={(e) => setFormData({ ...formData, shelf_id: e.target.value })}
@@ -181,12 +194,12 @@ export function AddObjectDialog({ isOpen, onClose, onAdd, warehouses }: AddObjec
 
             {/* Weight */}
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-2">Weight</label>
+              <label className="block text-sm font-medium text-zinc-300 mb-2">Weight*</label>
               <div className="flex">
                 <input
                   type="number" step="0.1"
                   value={formData.weight_value}
-                  onChange={(e) => setFormData({ ...formData, weight_value: parseFloat(e.target.value) || 0 })}
+                  onChange={(e) => setFormData({ ...formData, weight_value: parseFloat(e.target.value) })}
                   className="flex-1 px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-l-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
                   required
                 />
@@ -203,12 +216,12 @@ export function AddObjectDialog({ isOpen, onClose, onAdd, warehouses }: AddObjec
 
             {/* Width */}
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-2">Width</label>
+              <label className="block text-sm font-medium text-zinc-300 mb-2">Width*</label>
               <div className="flex">
                 <input
                   type="number" step="0.1"
                   value={formData.width_value}
-                  onChange={(e) => setFormData({ ...formData, width_value: parseFloat(e.target.value) || 0 })}
+                  onChange={(e) => setFormData({ ...formData, width_value: parseFloat(e.target.value) })}
                   className="flex-1 px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-l-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
                   required
                 />
@@ -226,12 +239,12 @@ export function AddObjectDialog({ isOpen, onClose, onAdd, warehouses }: AddObjec
 
             {/* Height */}
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-2">Height</label>
+              <label className="block text-sm font-medium text-zinc-300 mb-2">Height*</label>
               <div className="flex">
                 <input
                   type="number" step="0.1"
                   value={formData.height_value}
-                  onChange={(e) => setFormData({ ...formData, height_value: parseFloat(e.target.value) || 0 })}
+                  onChange={(e) => setFormData({ ...formData, height_value: parseFloat(e.target.value) })}
                   className="flex-1 px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-l-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
                   required
                 />
@@ -249,11 +262,11 @@ export function AddObjectDialog({ isOpen, onClose, onAdd, warehouses }: AddObjec
 
             {/* Quantity */}
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-2">Quantity</label>
+              <label className="block text-sm font-medium text-zinc-300 mb-2">Quantity*</label>
               <input
                 type="number" min="1"
                 value={formData.quantity}
-                onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 0 })}
+                onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) })}
                 className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
                 required
               />
@@ -270,17 +283,12 @@ export function AddObjectDialog({ isOpen, onClose, onAdd, warehouses }: AddObjec
               />
             </div>
 
-            {/* AI Checkbox */}
+            {/* AI Toggle Switch */}
             <div className="md:col-span-2">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={formData.is_ai}
-                  onChange={(e) => setFormData({ ...formData, is_ai: e.target.checked })}
-                  className="w-5 h-5 bg-zinc-800 border border-zinc-700 rounded text-blue-600"
-                />
-                <span className="text-sm font-medium text-zinc-300">Enable AI features</span>
-              </label>
+              <AIToggle 
+                checked={formData.is_ai} 
+                onChange={(v) => setFormData({ ...formData, is_ai: v })} 
+              />
             </div>
           </div>
 

@@ -67,8 +67,6 @@ class ItemController extends Controller
             $ai_class_id = $this->generateAiId();
         }
 
-        $validated['shelf_id'] = "{$validated['aisle_id']}_{$validated['shelf_id']}";
-
         $id = $this->firestore->createDocument('item_management', array_merge(
             \Arr::only($validated, ['name', 'aisle_id', 'description', 'quantity', 'shelf_id', 'warehouse_id']),
             ['is_ai'   => $validated['is_ai'] ?? false],
@@ -119,8 +117,8 @@ class ItemController extends Controller
             }
         }
 
-        if (isset($item['is_ai'])) {
-            if ($item['is_ai'] && !isset($item['ai_class_id'])) {
+        if (!isset($item['ai_class_id'])) {
+            if ($item['is_ai'] && !$item['ai_class_id']) {
                 $item['ai_class_id'] = $this->generateAiId();
             }
         }
@@ -155,7 +153,7 @@ class ItemController extends Controller
     /**
      * Ricerca items
      */
-    private function searchItems(string $query): array
+    public function searchItems(string $query): array
     {
         $allItems = $this->firestore->getCollection('item_management');
         $query = strtolower($query);

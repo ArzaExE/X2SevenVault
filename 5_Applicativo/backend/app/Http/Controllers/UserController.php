@@ -227,6 +227,20 @@ class UserController extends Controller
             return response()->json(['error' => 'User not found'], 404);
         }
 
+        if ($user['role']['role_name'] == 'admin'){
+            $users = $this->firestore->getCollection('user_management');
+
+            $admins = array_filter($users, function($user) {
+                return isset($user['role']['role_name']) && $user['role']['role_name'] === 'admin';
+            });
+
+            $adminCount = count($admins);
+
+            if ($adminCount == 1){
+                return response()->json(['error' => "You are the only admin, you can't delete yourself"], 404);
+            }
+        }
+
         $delete = $this->firestore->deleteDocument('user_management', $id);
 
         if (!$delete) {
