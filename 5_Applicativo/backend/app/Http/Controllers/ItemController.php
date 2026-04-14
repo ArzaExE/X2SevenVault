@@ -76,7 +76,7 @@ class ItemController extends Controller
         ));
 
         if (!$id) {
-            return response()->json(['error' => 'Error while creating item'], 404);
+            return response()->json(['error' => 'Error while creating item'], 500);
         }
 
         $item = $this->firestore->getDocument('item_management', $id);
@@ -125,7 +125,7 @@ class ItemController extends Controller
 
         $set = $this->firestore->setDocument('item_management', $id, $item);
         if (!$set) {
-            return response()->json(['error' => 'Error while updating item'], 404);
+            return response()->json(['error' => 'Error while updating item'], 500);
         }
 
         $item['id'] = $id;
@@ -147,7 +147,7 @@ class ItemController extends Controller
             return response()->json(['error' => 'Error while deleting item'], 500);
         }
 
-        return response()->json(['message' => 'Item deleted successfully']);
+        return response()->json(['message' => 'Item deleted successfully'], 204);
     }
 
     /**

@@ -72,7 +72,7 @@ class ShelfController extends Controller
         $shelf = $this->firestore->getDocument("warehouse_management/{$warehouseId}/aisles/{$aisleId}/shelves", $validated['shelf_id']);
 
         if ($shelf) {
-            return response()->json(['error' => "Shelf with id {$validated['shelf_id']} already exists."], 404);
+            return response()->json(['error' => "Shelf with id {$validated['shelf_id']} already exists."], 409);
         }
 
         $store = $this->firestore->setDocument("warehouse_management/{$warehouseId}/aisles/{$aisleId}/shelves", $validated['shelf_id'], [
@@ -140,7 +140,7 @@ class ShelfController extends Controller
         $items = $this->itemController->searchItems($warehouseId);
 
         if($items) {
-            return response()->json(['error' => "Can't delete warehouse with items on it"], 500);
+            return response()->json(['error' => "Can't delete shelf with items on it"], 409);
         }
 
         $delete = $this->firestore->deleteDocument("warehouse_management/{$warehouseId}/aisles/{$aisleId}/shelves", $shelfId);
@@ -149,7 +149,7 @@ class ShelfController extends Controller
             return response()->json(['error' => 'Error while deleting shelf'], 500);
         }
 
-        return response()->json(['message' => 'Shelf deleted successfully']);
+        return response()->json(['message' => 'Shelf deleted successfully'], 204);
     }
 
     private function formatShelf(array $shelf): array

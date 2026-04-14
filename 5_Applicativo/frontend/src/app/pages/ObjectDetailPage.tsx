@@ -1,67 +1,36 @@
 import { useParams, useNavigate, Navigate } from "react-router";
 import { Item, useItems } from "../context/ItemsContext";
 import { useAuth } from "../context/AuthContext";
-import { ArrowLeft, Package, MapPin, Layers, Weight, Ruler, Maximize, Bot, Edit, Hash, BrainCircuit } from "lucide-react";
-import { useEffect, useState } from "react";
+import { ArrowLeft, Package, MapPin, Layers, Weight, Ruler, Maximize, Bot, Edit, Hash, BrainCircuit, Warehouse } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
+
+function ActiveToggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <label className="flex items-center gap-3 cursor-pointer">
+      <div className="relative">
+        <input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)} className="sr-only" />
+        <div className={`w-10 h-6 rounded-full transition-colors ${checked ? "bg-blue-600" : "bg-zinc-600"}`} />
+        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${checked ? "translate-x-5" : "translate-x-1"}`} />
+      </div>
+      <span className="text-sm text-zinc-300">Enable AI</span>
+    </label>
+  );
+}
 
 export function ObjectDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { getItemById, warehouseCount, deleteItem, itemLoading, updateItem } = useItems();
-  const [item, setItem] = useState<Item | null>(null);
+  const { getItemById, deleteItem, itemLoading, updateItem, warehouses } = useItems();
   const { user, isGuest, authLoading } = useAuth();
+
+  const [item, setItem] = useState<Item | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [loadingItem, setLoadingItem] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  if (itemLoading || authLoading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-zinc-400 text-lg">Loading...</p>
-      </div>
-    );
-  }
-
-  if (!user && !isGuest) {
-    return <Navigate to="/login" replace/>;
-  }
-
-  const handleGuest = () => {
-    navigate("/objects");
-  };
-
-  useEffect(() => {
-    const fetchItem = async () => {
-      if (!id) return;
-      const data = await getItemById(id);
-      setItem(data);
-      setLoadingItem(false);
-    };
-
-    fetchItem();
-  }, [id, getItemById]);
-
-  useEffect(() => {
-    if (!item) return;
-
-    setEditForm({
-      id: item.id,
-      name: item.name,
-      description: item.description || "",
-      weight_value: item.weight_value,
-      weight_unit: item.weight_unit,
-      width_unit: item.width_unit,
-      width_value: item.width_value,
-      height_unit: item.height_unit,
-      height_value: item.height_value,
-      quantity: item.quantity,
-      is_ai: item.is_ai,
-    });
-  }, [item]);
-
-  const [editForm, setEditForm] = useState({
+  const emptyForm = {
     id: "",
     name: "",
     description: "",
@@ -73,17 +42,50 @@ export function ObjectDetailPage() {
     height_value: 0,
     quantity: 0,
     is_ai: false,
-  });
+  };
 
-  if (authLoading || loadingItem) {
+  const [editForm, setEditForm] = useState(emptyForm);
+  const editFormRef = useRef(emptyForm);
+
+  const updateEditForm = (data: typeof emptyForm) => {
+    editFormRef.current = data;
+    setEditForm(data);
+  };
+
+  useEffect(() => {
+    const fetchItem = async () => {
+      if (!id) return;
+      const data = await getItemById(id);
+      if (data) {
+        setItem(data);
+        updateEditForm({
+          id: data.id,
+          name: data.name,
+          description: data.description || "",
+          weight_value: data.weight_value,
+          weight_unit: data.weight_unit,
+          width_unit: data.width_unit,
+          width_value: data.width_value,
+          height_unit: data.height_unit,
+          height_value: data.height_value,
+          quantity: data.quantity,
+          is_ai: data.is_ai,
+        });
+      }
+      setLoadingItem(false);
+    };
+    fetchItem();
+  }, [id]);
+
+  if (itemLoading || authLoading || loadingItem) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-zinc-400 text-lg">Loading...</p>
+      <div className="flex flex-col items-center justify-center h-full gap-4">
+        <div className="w-10 h-10 border-4 border-zinc-700 border-t-blue-600 rounded-full animate-spin" />
+        <p className="text-zinc-400 text-lg animate-pulse">Loading...</p>
       </div>
     );
   }
 
-  // ora authLoading è false
   if (!user && !isGuest) {
     return <Navigate to="/login" replace />;
   }
@@ -108,30 +110,24 @@ export function ObjectDetailPage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    const formData = editFormRef.current;
     setError(null);
     setIsSubmitting(true);
-
     try {
-      await updateItem(item.id, editForm);
-
+      await updateItem(item.id, formData);
       const updatedData = await getItemById(item.id);
-      if (updatedData) 
+      if (updatedData) {
         setItem(updatedData);
-        toast.success("Object updated successfully!");
-        setIsEditing(false);
+      }
+      toast.success("Object updated successfully!");
+      setIsEditing(false);
     } catch (err: any) {
-      // Estraiamo il messaggio di errore dal server (Axios mette la risposta in err.response)
-      const serverMessage = err.response?.data?.message || 
-                            err.response?.data?.error || 
-                            "An unexpected error occurred. Please check your data.";
-      setError(serverMessage);
-      // Se il server ritorna errori specifici per campo (Laravel style)
       const validationErrors = err.response?.data?.errors;
       if (validationErrors) {
         const firstError = Object.values(validationErrors)[0] as string[];
-        setError(firstError[0]); // Mostriamo il primo errore di validazione trovato
+        setError(firstError[0]);
       } else {
-        const msg = err.response?.data?.message || "Error adding object. Please try again.";
+        const msg = err.response?.data?.message || err.response?.data?.error || "Error updating object. Please try again.";
         setError(msg);
         toast.error("Errore: " + msg);
       }
@@ -141,7 +137,7 @@ export function ObjectDetailPage() {
   };
 
   const handleCancel = () => {
-    setEditForm({
+    updateEditForm({
       id: item.id,
       name: item.name,
       description: item.description || "",
@@ -154,28 +150,17 @@ export function ObjectDetailPage() {
       quantity: item.quantity,
       is_ai: item.is_ai,
     });
+    
     setIsEditing(false);
+    setError(null);
   };
-
-function ActiveToggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
-  return (
-    <label className="flex items-center gap-3 cursor-pointer">
-      <div className="relative">
-        <input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)} className="sr-only" />
-        <div className={`w-10 h-6 rounded-full transition-colors ${checked ? "bg-blue-600" : "bg-zinc-600"}`} />
-        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${checked ? "translate-x-5" : "translate-x-1"}`} />
-      </div>
-      <span className="text-sm text-zinc-300">Enable AI</span>
-    </label>
-  );
-}
 
   return (
     <>
       {/* Header */}
       <div className="bg-zinc-900 border-b border-zinc-800 px-8 py-6">
         <button
-          onClick={handleGuest}
+          onClick={() => navigate("/objects")}
           className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors mb-4"
         >
           <ArrowLeft className="w-5 h-5" />
@@ -187,7 +172,7 @@ function ActiveToggle({ checked, onChange }: { checked: boolean; onChange: (v: b
               <input
                 type="text"
                 value={editForm.name}
-                onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                onChange={(e) => updateEditForm({ ...editFormRef.current, name: e.target.value })}
                 className="text-2xl font-semibold bg-zinc-800 border border-zinc-700 rounded px-3 py-1 text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
               />
             ) : (
@@ -242,11 +227,17 @@ function ActiveToggle({ checked, onChange }: { checked: boolean; onChange: (v: b
             )}
           </div>
         </div>
+        {error && (
+          <div className="mt-4 px-4 py-3 bg-red-900/30 border border-red-700 rounded-lg text-red-400 text-sm">
+            {error}
+          </div>
+        )}
       </div>
 
       {/* Content */}
       <div className="flex-1 overflow-auto px-8 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
           {/* Location Information */}
           <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
             <h2 className="text-white text-lg font-semibold mb-4">Location Information</h2>
@@ -286,6 +277,8 @@ function ActiveToggle({ checked, onChange }: { checked: boolean; onChange: (v: b
           <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
             <h2 className="text-white text-lg font-semibold mb-4">Physical Specifications</h2>
             <div className="space-y-4">
+
+              {/* Quantity */}
               <div className="flex items-start gap-3">
                 <Hash className="w-5 h-5 text-zinc-400 mt-0.5" />
                 <div className="flex-1">
@@ -293,76 +286,116 @@ function ActiveToggle({ checked, onChange }: { checked: boolean; onChange: (v: b
                   {isEditing ? (
                     <input
                       type="number"
-                      min="1"
+                      min="0"
                       value={editForm.quantity}
-                      onChange={(e) => setEditForm({ ...editForm, quantity: parseInt(e.target.value) || 1 })}
-                      className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-1 text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                      onChange={(e) => updateEditForm({ ...editFormRef.current, quantity: parseInt(e.target.value) || 0 })}
+                      className="w-full mt-1 bg-zinc-800 border border-zinc-700 rounded px-3 py-1 text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
                     />
                   ) : (
                     <p className="text-white font-medium">{item.quantity}</p>
                   )}
                 </div>
               </div>
+
+              {/* Weight */}
               <div className="flex items-start gap-3">
                 <Weight className="w-5 h-5 text-zinc-400 mt-0.5" />
                 <div className="flex-1">
                   <p className="text-zinc-400 text-sm">Weight</p>
                   {isEditing ? (
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={editForm.weight_value}
-                      onChange={(e) => setEditForm({ ...editForm, weight_value: parseFloat(e.target.value) })}
-                      className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-1 text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
-                    />
+                    <div className="flex mt-1">
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={editForm.weight_value}
+                        onChange={(e) => updateEditForm({ ...editFormRef.current, weight_value: Number(parseFloat(e.target.value).toFixed(2) || 0) })}
+                        className="flex-1 bg-zinc-800 border border-zinc-700 rounded-l px-3 py-1 text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                      />
+                      <select
+                        value={editForm.weight_unit}
+                        onChange={(e) => updateEditForm({ ...editFormRef.current, weight_unit: e.target.value })}
+                        className="w-20 bg-zinc-700 border border-zinc-700 border-l-0 rounded-r text-white focus:outline-none px-1 text-sm"
+                      >
+                        <option value="kg">kg</option>
+                        <option value="lbs">lbs</option>
+                      </select>
+                    </div>
                   ) : (
                     <p className="text-white font-medium">{item.weight_value} {item.weight_unit}</p>
                   )}
                 </div>
               </div>
+
+              {/* Width */}
               <div className="flex items-start gap-3">
                 <Ruler className="w-5 h-5 text-zinc-400 mt-0.5" />
                 <div className="flex-1">
                   <p className="text-zinc-400 text-sm">Width</p>
                   {isEditing ? (
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={editForm.width_value}
-                      onChange={(e) => setEditForm({ ...editForm, width_value: parseFloat(e.target.value) })}
-                      className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-1 text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
-                    />
+                    <div className="flex mt-1">
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={editForm.width_value}
+                        onChange={(e) => updateEditForm({ ...editFormRef.current, width_value: Number(parseFloat(e.target.value).toFixed(2) || 0) })}
+                        className="flex-1 bg-zinc-800 border border-zinc-700 rounded-l px-3 py-1 text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                      />
+                      <select
+                        value={editForm.width_unit}
+                        onChange={(e) => updateEditForm({ ...editFormRef.current, width_unit: e.target.value })}
+                        className="w-20 bg-zinc-700 border border-zinc-700 border-l-0 rounded-r text-white focus:outline-none px-1 text-sm"
+                      >
+                        <option value="cm">cm</option>
+                        <option value="mm">mm</option>
+                        <option value="m">m</option>
+                      </select>
+                    </div>
                   ) : (
                     <p className="text-white font-medium">{item.width_value} {item.width_unit}</p>
                   )}
                 </div>
               </div>
+
+              {/* Height */}
               <div className="flex items-start gap-3">
                 <Maximize className="w-5 h-5 text-zinc-400 mt-0.5" />
                 <div className="flex-1">
                   <p className="text-zinc-400 text-sm">Height</p>
                   {isEditing ? (
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={editForm.height_value}
-                      onChange={(e) => setEditForm({ ...editForm, height_value: parseFloat(e.target.value) })}
-                      className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-1 text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
-                    />
+                    <div className="flex mt-1">
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={editForm.height_value}
+                        onChange={(e) => updateEditForm({ ...editFormRef.current, height_value: Number(parseFloat(e.target.value).toFixed(2) || 0) })}
+                        className="flex-1 bg-zinc-800 border border-zinc-700 rounded-l px-3 py-1 text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                      />
+                      <select
+                        value={editForm.height_unit}
+                        onChange={(e) => updateEditForm({ ...editFormRef.current, height_unit: e.target.value })}
+                        className="w-20 bg-zinc-700 border border-zinc-700 border-l-0 rounded-r text-white focus:outline-none px-1 text-sm"
+                      >
+                        <option value="cm">cm</option>
+                        <option value="mm">mm</option>
+                        <option value="m">m</option>
+                      </select>
+                    </div>
                   ) : (
                     <p className="text-white font-medium">{item.height_value} {item.height_unit}</p>
                   )}
                 </div>
               </div>
+
+              {/* AI Features */}
               <div className="flex items-start gap-3">
                 <Bot className="w-5 h-5 text-zinc-400 mt-0.5" />
                 <div className="flex-1">
                   <p className="text-zinc-400 text-sm">AI Features</p>
                   {isEditing ? (
-                    <div className="md:col-span-2 mt-2">
-                      <ActiveToggle 
-                        checked={editForm.is_ai} 
-                        onChange={(is_ai) => setEditForm(prev => ({ ...prev, is_ai }))}
+                    <div className="mt-2">
+                      <ActiveToggle
+                        checked={editForm.is_ai}
+                        onChange={(is_ai) => updateEditForm({ ...editFormRef.current, is_ai })}
                       />
                     </div>
                   ) : (
@@ -373,6 +406,7 @@ function ActiveToggle({ checked, onChange }: { checked: boolean; onChange: (v: b
             </div>
           </div>
 
+          {/* AI ID */}
           <div className="md:col-span-2 bg-zinc-900 border border-zinc-800 rounded-lg p-6">
             <div className="flex items-center gap-2 mb-2">
               <BrainCircuit className="w-4 h-4 text-blue-400" />
@@ -394,7 +428,7 @@ function ActiveToggle({ checked, onChange }: { checked: boolean; onChange: (v: b
             {isEditing ? (
               <textarea
                 value={editForm.description}
-                onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                onChange={(e) => updateEditForm({ ...editFormRef.current, description: e.target.value })}
                 rows={4}
                 className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-600"
                 placeholder="Enter object description"
@@ -403,6 +437,7 @@ function ActiveToggle({ checked, onChange }: { checked: boolean; onChange: (v: b
               <p className="text-zinc-300 leading-relaxed">{item.description || "No description available"}</p>
             )}
           </div>
+
         </div>
       </div>
     </>

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useWarehouses } from "../context/WarehousesContext";
 import { Plus, Trash2, Package, X, Edit, Info, Loader2 } from "lucide-react";
 import { toast } from "react-hot-toast";
+import { useAuth } from "../context/AuthContext";
 
 const extractError = (err: any): string => {
   const data = err.response?.data;
@@ -139,6 +140,8 @@ export function WarehousePage() {
   const [deletingAisleId, setDeletingAisleId] = useState<string | null>(null);
   const [deletingShelfId, setDeletingShelfId] = useState<string | null>(null);
 
+  const { authLoading } = useAuth();
+
   const handleAddWarehouse = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmittingAddWarehouse(true);
@@ -232,10 +235,11 @@ export function WarehousePage() {
 
   const selectedWarehouseData = warehouses.find((wh) => wh.id === selectedWarehouse);
 
-  if (warehouseLoading) {
+  if (warehouseLoading || authLoading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-zinc-400 text-lg">Loading warehouses...</p>
+      <div className="flex flex-col items-center justify-center h-full gap-4">
+        <div className="w-10 h-10 border-4 border-zinc-700 border-t-blue-600 rounded-full animate-spin" />
+        <p className="text-zinc-400 text-lg animate-pulse">Loading...</p>
       </div>
     );
   }

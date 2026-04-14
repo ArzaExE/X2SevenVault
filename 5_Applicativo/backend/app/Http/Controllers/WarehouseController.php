@@ -41,6 +41,53 @@ class WarehouseController extends Controller
         return response()->json($warehouses);
     }
 
+    public function showCompleteWarehouses()
+    {
+        $warehouses = $this->firestore->getCollection('warehouse_management');
+
+        $completeStructure = array_map(function ($whData) {
+            $warehouseId = $whData['id'];
+            $formattedWh = $this->formatWarehouse($whData);
+
+            // 1. Recupero le corsie
+            $allAisles = $this->firestore->getCollection("warehouse_management/{$warehouseId}/aisles");
+
+            // 2. Mappo e filtro le corsie: tengo solo quelle che hanno almeno uno scaffale
+            $formattedAisles = array_filter(array_map(function ($aisleData) use ($warehouseId) {
+                $aisleId = $aisleData['id'];
+                $formattedAisle = $this->formatAisle($aisleData);
+
+                // 3. Recupero gli scaffali
+                $shelves = $this->firestore->getCollection("warehouse_management/{$warehouseId}/aisles/{$aisleId}/shelves");
+
+                // Se non ci sono scaffali, restituisco null (verrà filtrato dopo)
+                if (empty($shelves)) {
+                    return null;
+                }
+
+                $formattedAisle['shelves'] = array_map(function ($shelfData) {
+                    return $this->formatShelf($shelfData);
+                }, $shelves);
+
+                return $formattedAisle;
+            }, $allAisles));
+
+            // Se dopo il filtro non sono rimaste corsie valide, restituisco null
+            if (empty($formattedAisles)) {
+                return null;
+            }
+
+            $formattedWh['aisles'] = array_values($formattedAisles);
+            return $formattedWh;
+
+        }, $warehouses);
+
+        // 4. Filtro finale: tengo solo le warehouse che non sono null
+        $result = array_values(array_filter($completeStructure));
+
+        return response()->json($result);
+    }
+
     /**
      * Dettaglio singolo warehouse
      * GET /api/warehouses/{warehouseId}
@@ -67,7 +114,7 @@ class WarehouseController extends Controller
         $warehouse = $this->firestore->getDocument('warehouse_management', $validated['warehouse_id']);
 
         if ($warehouse) {
-            return response()->json(['error' => "Warehouse with id {$validated['warehouse_id']} already exists."], 404);
+            return response()->json(['error' => "Warehouse with id {$validated['warehouse_id']} already exists."], 409);
         }
 
         $store = $this->firestore->setDocument('warehouse_management', $validated['warehouse_id'], [
@@ -130,7 +177,7 @@ class WarehouseController extends Controller
         $items = $this->itemController->searchItems($warehouseId);
 
         if($items) {
-            return response()->json(['error' => "Can't delete warehouse with items on it"], 500);
+            return response()->json(['error' => "Can't delete warehouse with items on it"], 409);
         }
 
         $delete = $this->firestore->deleteDocument('warehouse_management', $warehouseId);
@@ -139,7 +186,7 @@ class WarehouseController extends Controller
             return response()->json(['error' => 'Error while deleting warehouse'], 500);
         }
 
-        return response()->json(['message' => 'Warehouse deleted successfully']);
+        return response()->json(['message' => 'Warehouse deleted successfully'], 204);
     }
 
     private function formatWarehouse(array $warehouse): array
@@ -149,6 +196,22 @@ class WarehouseController extends Controller
             'name'        => $warehouse['name'],
             'description' => $warehouse['description'] ?? null,
             'is_active'   => $warehouse['is_active'],
+        ];
+    }
+
+    private function formatAisle(array $aisle): array
+    {
+        return [
+            'id'           => $aisle['id'],
+            'name'         => $aisle['name'],
+        ];
+    }
+
+    private function formatShelf(array $shelf): array
+    {
+        return [
+            'id'       => $shelf['id'],
+            'name'     => $shelf['name'],
         ];
     }
 }

@@ -16,8 +16,13 @@ export function LoginPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-        <p className="text-zinc-400">Loading...</p>
+      <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center p-4">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-zinc-800 border-t-blue-600 rounded-full animate-spin" />
+          <p className="text-zinc-400 text-lg animate-pulse font-medium">
+            Loading X2SevenVault...
+          </p>
+        </div>
       </div>
     );
   }

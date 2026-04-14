@@ -18,7 +18,7 @@ export function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [savingAccount, setSavingAccount] = useState(false);
   const [updatingPass, setUpdatingPass] = useState(false);
-  const { logout, refreshProfile } = useAuth();
+  const { logout, refreshProfile, authLoading } = useAuth();
 
 
   // Caricamento iniziale tramite Context
@@ -73,9 +73,13 @@ export function SettingsPage() {
     }
   };
 
-  if (loading) return (
-    <div className="flex items-center justify-center h-full"><Loader2 className="animate-spin text-zinc-500" /></div>
-  );
+  if (loading || authLoading) 
+    return (
+      <div className="flex flex-col items-center justify-center h-full gap-4">
+        <div className="w-10 h-10 border-4 border-zinc-700 border-t-blue-600 rounded-full animate-spin" />
+        <p className="text-zinc-400 text-lg animate-pulse">Loading...</p>
+      </div>
+    );
 
   return (
     <div className="flex-1 overflow-auto px-8 py-6">

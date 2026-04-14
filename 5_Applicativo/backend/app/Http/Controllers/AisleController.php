@@ -71,7 +71,7 @@ class AisleController extends Controller
         $aisle = $this->firestore->getDocument("warehouse_management/{$warehouseId}/aisles", $validated['aisle_id']);
 
         if ($aisle) {
-            return response()->json(['error' => "Aisle with id {$validated['aisle_id']} already exists."], 404);
+            return response()->json(['error' => "Aisle with id {$validated['aisle_id']} already exists."], 409);
         }
 
         $store = $this->firestore->setDocument("warehouse_management/{$warehouseId}/aisles", $validated['aisle_id'], [
@@ -136,7 +136,7 @@ class AisleController extends Controller
         $items = $this->itemController->searchItems($warehouseId);
 
         if($items) {
-            return response()->json(['error' => "Can't delete aisle with items on it"], 500);
+            return response()->json(['error' => "Can't delete aisle with items on it"], 409);
         }
 
         $delete = $this->firestore->deleteDocument("warehouse_management/{$warehouseId}/aisles", $aisleId);
@@ -145,7 +145,7 @@ class AisleController extends Controller
             return response()->json(['error' => 'Error while deleting aisle'], 500);
         }
 
-        return response()->json(['message' => 'Aisle deleted successfully']);
+        return response()->json(['message' => 'Aisle deleted successfully'], 204);
     }
 
     private function formatAisle(array $aisle): array

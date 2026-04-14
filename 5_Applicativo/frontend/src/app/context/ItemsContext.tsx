@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode, useEffect } from "react";
+import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from "react";
 import { 
   getItems, 
   getItemById as fetchItemById, 
@@ -7,7 +7,7 @@ import {
   updateItem
 } 
 from "../services/itemService";
-import { getWarehouses, getAisles, getShelves } from "../services/warehouseService";
+import { getWarehouses, getAisles, getShelves, getCompleteWarehouses } from "../services/warehouseService";
 import { useAuth } from "./AuthContext";
 
 export interface Item {
@@ -62,6 +62,7 @@ interface ItemContextType {
   warehouses: Warehouse[];
   loadAisles: (warehouseId: string) => Promise<Aisle[]>;
   loadShelves: (warehouseId: string, aisleId: string) => Promise<Shelf[]>;
+  loadCompleteWarehouses: () => Promise<void>;
   getItemById: (id: string) => Promise<Item | null>;
   addItem: (data: Omit<Item, "id">) => Promise<any>;
   updateItem: (id: string, data: Partial<Item>) => Promise<any>;
@@ -85,34 +86,38 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const { user, isGuest } = useAuth();
 
+  const loadCompleteWarehouses = async () => {
+    setWarehouseLoading(true);
+    try {
+      const res = await getCompleteWarehouses();
+      setWarehouses(res.data);                  // o res.data.data ?
+    } catch (err) {
+      console.error("Error loading complete structure:", err);
+    } finally {
+      setWarehouseLoading(false);
+    }
+  };
+
   useEffect(() => {
     const loadInitialData = async () => {
-      // Iniziamo mettendo tutto in loading
       setItemLoading(true);
       setWarehouseLoading(true);
-
       try {
-        // 1. Aspetta il caricamento degli items se c'è sessione
         if (user || isGuest) {
-          // Usa await qui per bloccare l'esecuzione finché non finisce getItems
           const res = await getItems();
           setItems(res.data);
         }
-
-        // 2. Aspetta le Warehouse se non è guest
+        // USIAMO IL CARICAMENTO COMPLETO ALL'AVVIO
         if (user && !isGuest) {
-          const warehouseRes = await getWarehouses();
-          setWarehouses(warehouseRes.data);
+          await loadCompleteWarehouses(); 
         }
       } catch (err) {
         console.error("Initialization error:", err);
       } finally {
-        // SOLO ORA spegniamo i caricamenti, tutti insieme
         setItemLoading(false);
         setWarehouseLoading(false);
       }
     };
-
     loadInitialData();
   }, [user, isGuest]);
 
@@ -159,7 +164,7 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const getItemById = async (id: string): Promise<Item | null> => {
+  const getItemById = useCallback(async (id: string): Promise<Item | null> => {
     try {
       const res = await fetchItemById(id);
       return res.data;
@@ -167,7 +172,7 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
       console.error("Error fetching item:", err);
       return null;
     }
-  };
+  }, []);
 
   const addItem = async (data: Omit<Item, "id">) => {
     try {
@@ -182,7 +187,7 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
 
   const editItem = async (id: string, data: Partial<Item>) => {
     try {
-      const res = await updateItem(id, data);
+      const res = await updateItem(id, data);;
       setItems((prev) =>
         prev.map((item) => (item.id === id ? res.data : item))
       );
@@ -209,6 +214,7 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
       value={{
         items,
         warehouses,
+        loadCompleteWarehouses,
         loadAisles,
         loadShelves,
         getItemById,

@@ -24,6 +24,7 @@ class ItemUpdateRequest extends FormRequest
      */
     public function rules(): array
     {
+        \Log::info('ItemUpdateRequest rules called', $this->all());
         $warehouseId = $this->input('warehouse_id');
         $aisleId     = $this->input('aisle_id');
         $firestore = app(FirestoreService::class);
@@ -39,9 +40,9 @@ class ItemUpdateRequest extends FormRequest
             'weight_value' => 'sometimes|numeric|min:0',
             'width_value'  => 'sometimes|numeric|min:0',
 
-            'height_unit' => 'sometimes|string|max:10',
-            'weight_unit' => 'sometimes|string|max:10',
-            'width_unit'  => 'sometimes|string|max:10',
+            'height_unit'   => 'sometimes|string|in:cm,mm,m',
+            'weight_unit'   => 'sometimes|string|in:kg,lbs',
+            'width_unit'    => 'sometimes|string|in:cm,mm,m',
         ];
 
         // Se cambia warehouse → aisle e shelf diventano obbligatori

@@ -39,6 +39,7 @@ Route::middleware('firebase.auth')->group(function () {
     Route::delete('/items/{id}', [ItemController::class, 'destroy']);
 
     // Warehouses
+    Route::get('/warehouses/complete', [WarehouseController::class, 'showCompleteWarehouses']);
     Route::apiResource('warehouses', WarehouseController::class);
 
     // Aisles (annidate dentro warehouse)

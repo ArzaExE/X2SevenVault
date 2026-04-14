@@ -61,7 +61,7 @@ class UserController extends Controller
         $set = $this->firestore->setDocument('user_management', $id, $user);
 
         if (!$set) {
-            return response()->json(['error' => 'Error while saving user'], 404);
+            return response()->json(['error' => 'Error while saving user'], 500);
         }
 
         $user = $this->firestore->getDocument("user_management", $id);
@@ -153,7 +153,7 @@ class UserController extends Controller
 
         if (!$set) {
             $this->auth->deleteUser($id);
-            return response()->json(['error' => 'Error adding user'], 404);
+            return response()->json(['error' => 'Error adding user'], 500);
         }
 
         $user = $this->firestore->getDocument("user_management", $id);
@@ -207,7 +207,7 @@ class UserController extends Controller
 
         $set = $this->firestore->setDocument('user_management', $id, $user);
         if (!$set) {
-            return response()->json(['error' => 'Error while saving user'], 404);
+            return response()->json(['error' => 'Error while saving user'], 500);
         }
 
         $user['id'] = $id;
@@ -237,19 +237,19 @@ class UserController extends Controller
             $adminCount = count($admins);
 
             if ($adminCount == 1){
-                return response()->json(['error' => "You are the only admin, you can't delete yourself"], 404);
+                return response()->json(['error' => "You are the only admin, you can't delete yourself"], 403);
             }
         }
 
         $delete = $this->firestore->deleteDocument('user_management', $id);
 
         if (!$delete) {
-            return response()->json(['error' => 'Error while deleting user'], 404);
+            return response()->json(['error' => 'Error while deleting user'], 500);
         }
 
         $this->auth->deleteUser($id);
 
-        return response()->json(['message' => 'User deleted successfully']);
+        return response()->json(['message' => 'User deleted successfully'], 204);
     }
 
     /**

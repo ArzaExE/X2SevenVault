@@ -5,6 +5,10 @@ export const getWarehouses = () => {
   return api.get("/warehouses");
 };
 
+export const getCompleteWarehouses = () => {
+  return api.get("/warehouses/complete");
+};
+
 export const getWarehouseById = (id: string) => {
   return api.get(`/warehouses/${id}`);
 };
