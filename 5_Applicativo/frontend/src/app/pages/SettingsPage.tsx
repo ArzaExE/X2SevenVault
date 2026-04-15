@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { User as UserIcon, Key, Loader2, Save } from "lucide-react";
+import { User as UserIcon, Key, Loader2, Save, EyeOff, Eye } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { useUsers } from "../context/UsersContext"; // Importiamo il context
 import { useAuth } from "../context/AuthContext";
@@ -11,6 +11,7 @@ const extractError = (err: any): string => {
 
 export function SettingsPage() {
   const { getMe, updateUser, updatePassword } = useUsers();
+  const { logout, refreshProfile, authLoading } = useAuth();
   
   const [userData, setUserData] = useState({ id: "", name: "", email: "" });
   const [passwords, setPasswords] = useState({ new: "", confirm: "" });
@@ -18,7 +19,9 @@ export function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [savingAccount, setSavingAccount] = useState(false);
   const [updatingPass, setUpdatingPass] = useState(false);
-  const { logout, refreshProfile, authLoading } = useAuth();
+  
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
 
   // Caricamento iniziale tramite Context
@@ -124,20 +127,33 @@ export function SettingsPage() {
             <h2 className="text-white text-xl font-semibold">Security</h2>
           </div>
           <div className="space-y-4">
-            <input
-              type="password"
-              placeholder="New Password"
-              value={passwords.new}
-              onChange={e => setPasswords({ ...passwords, new: e.target.value })}
-              className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white outline-none focus:ring-2 focus:ring-blue-600"
-            />
-            <input
-              type="password"
-              placeholder="Confirm Password"
-              value={passwords.confirm}
-              onChange={e => setPasswords({ ...passwords, confirm: e.target.value })}
-              className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white outline-none focus:ring-2 focus:ring-blue-600"
-            />
+            <div className="relative">
+              <input
+                type={showNew ? "text" : "password"}
+                placeholder="New Password"
+                value={passwords.new}
+                onChange={e => setPasswords({ ...passwords, new: e.target.value })}
+                className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white outline-none focus:ring-2 focus:ring-blue-600 pr-10"
+              />
+              <button type="button" onClick={() => setShowNew(!showNew)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-300">
+                {showNew ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
+
+            <div className="relative">
+              <input
+                type={showConfirm ? "text" : "password"}
+                placeholder="Confirm Password"
+                value={passwords.confirm}
+                onChange={e => setPasswords({ ...passwords, confirm: e.target.value })}
+                className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white outline-none focus:ring-2 focus:ring-blue-600 pr-10"
+              />
+              <button type="button" onClick={() => setShowConfirm(!showConfirm)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-300">
+                {showConfirm ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
             <button disabled={updatingPass} className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
               {updatingPass ? <Loader2 className="w-4 h-4 animate-spin" /> : <Key className="w-4 h-4" />}
               Update Password

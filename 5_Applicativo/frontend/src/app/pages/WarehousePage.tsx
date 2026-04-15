@@ -170,7 +170,7 @@ export function WarehousePage() {
     e.preventDefault();
     setIsSubmittingAddWarehouse(true);
     try {
-      await addWarehouse({ warehouse_id: newWarehouse.id, name: newWarehouse.name, description: newWarehouse.description, is_active: newWarehouse.is_active, aisles: [] });
+      await addWarehouse({ id: newWarehouse.id, name: newWarehouse.name, description: newWarehouse.description, is_active: newWarehouse.is_active, aisles: [] });
       setNewWarehouse({ id: "", name: "", description: "", is_active: true });
       setIsAddWarehouseOpen(false);
       toast.success("Warehouse added!");

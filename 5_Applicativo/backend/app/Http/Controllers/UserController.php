@@ -182,20 +182,7 @@ class UserController extends Controller
 
         $validated = $request->validated();
 
-        if (isset($validated['full_name'])) {
-            $user['full_name'] = $validated['full_name'];
-        }
-
-
-        if (isset($validated['role_name'])) {
-            $user['role'] = [
-                'role_id'     => $validated['role_id'],
-                'role_name'   => $validated['role_name'],
-                'description' => $this->getRoleDescription($validated['role_name']),
-            ];
-        }
-
-        if ($user['role']['role_name'] == 'admin' && $user['is_active']){
+        if ($user['role']['role_name'] == 'admin' && (!$validated['is_active'] || $validated['role_name'] == 'operator')){
             $users = $this->firestore->getCollection('user_management');
 
             $admins = array_filter($users, function($user) {
@@ -205,7 +192,7 @@ class UserController extends Controller
             $adminCount = count($admins);
 
             if ($adminCount == 1){
-                return response()->json(['error' => "You are the only admin, you can't disable yourself"], 403);
+                return response()->json(['error' => "You are the only admin, you can't disable yourself or change role"], 403);
             }
         }
 
@@ -234,6 +221,18 @@ class UserController extends Controller
             return response()->json(['error' => 'Unexpected error: ' . $e->getMessage()], 500);
         }
 
+        if (isset($validated['full_name'])) {
+            $user['full_name'] = $validated['full_name'];
+        }
+
+
+        if (isset($validated['role_name'])) {
+            $user['role'] = [
+                'role_id'     => $validated['role_id'],
+                'role_name'   => $validated['role_name'],
+                'description' => $this->getRoleDescription($validated['role_name']),
+            ];
+        }
 
         unset($user['id']);
 

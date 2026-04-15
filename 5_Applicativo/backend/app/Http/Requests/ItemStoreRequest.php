@@ -37,11 +37,11 @@ class ItemStoreRequest extends FormRequest
 
             'description'   => 'nullable|string|max:1000',
             'is_active'     => 'boolean',
-            'quantity'      => 'required|integer|min:0',
+            'quantity'      => 'required|integer|min:0|max:1000',
 
-            'height_value'  => 'required|numeric|min:0',
-            'weight_value'  => 'required|numeric|min:0',
-            'width_value'   => 'required|numeric|min:0',
+            'height_value'  => 'required|numeric|min:0|max:10000',
+            'weight_value'  => 'required|numeric|min:0|max:10000',
+            'width_value'   => 'required|numeric|min:0|max:10000',
 
             // Puoi usare 'in:cm,mm,m' per restringere le unità permesse
             'height_unit'   => 'required|string|in:cm,mm,m',

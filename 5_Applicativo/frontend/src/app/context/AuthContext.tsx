@@ -4,7 +4,7 @@ import { auth } from '../config/firebase';
 import api from '../config/axios';
 
 interface UserProfile {
-    user_id: string;
+    id: string;
     email: string;
     name: string;
     role: string;

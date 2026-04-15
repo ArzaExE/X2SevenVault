@@ -34,11 +34,11 @@ class ItemUpdateRequest extends FormRequest
             'is_ai'       => 'boolean',
             'description' => 'nullable|string|max:1000',
             'is_active'   => 'boolean',
-            'quantity'    => 'sometimes|integer|min:0',
+            'quantity'    => 'sometimes|integer|min:0|max:1000',
 
-            'height_value' => 'sometimes|numeric|min:0',
-            'weight_value' => 'sometimes|numeric|min:0',
-            'width_value'  => 'sometimes|numeric|min:0',
+            'height_value' => 'sometimes|numeric|min:0|max:10000',
+            'weight_value' => 'sometimes|numeric|min:0|max:10000',
+            'width_value'  => 'sometimes|numeric|min:0|max:10000',
 
             'height_unit'   => 'sometimes|string|in:cm,mm,m',
             'weight_unit'   => 'sometimes|string|in:kg,lbs',

@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useUsers, User } from "../context/UsersContext";
-import { Plus, Trash2, Edit, X, Search, Loader2 } from "lucide-react";
+import { Plus, Trash2, Edit, X, Search, Loader2, EyeOff, Eye } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { Navigate } from "react-router";
 import { ConfirmDialog } from "../components/ConfirmDialog";
@@ -50,6 +50,9 @@ function DialogForm({
   setFormData: React.Dispatch<React.SetStateAction<FormData>>;
   showPassword?: boolean;
 }) {
+  
+  const [showPasswordVisible, setShowPasswordVisible] = useState(false);
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-zinc-900 rounded-lg w-full max-w-md border border-zinc-800">
@@ -85,14 +88,23 @@ function DialogForm({
           {showPassword && (
             <div>
               <label className="block text-sm font-medium text-zinc-300 mb-2">Password*</label>
-              <input
-                type="password"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className={inputCls}
-                placeholder="Enter password"
-                required
-              />
+              <div className="relative">
+                <input
+                  type={showPasswordVisible ? "text" : "password"}
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  className={inputCls}
+                  placeholder="Enter password"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPasswordVisible(!showPasswordVisible)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-300"
+                >
+                  {showPasswordVisible ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
             </div>
           )}
           <div>
@@ -145,7 +157,7 @@ function DialogForm({
 
 export function UsersPage() {
   const { users, createUser, updateUser, deleteUser, userLoading } = useUsers();
-  const { user, isGuest, authLoading } = useAuth();
+  const { user, isGuest, authLoading, logout, profile } = useAuth();
 
   const [searchQuery, setSearchQuery]       = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen]   = useState(false);
@@ -221,6 +233,11 @@ export function UsersPage() {
       setIsEditDialogOpen(false);
       setSelectedUser(null);
       toast.success("User updated!");
+
+      // Se ho disattivato me stesso → logout
+      if (selectedUser.id === profile?.id && !formData.is_active) {
+        await logout();
+      }
     } catch (err: any) {
       toast.error(extractError(err));
     } finally {
@@ -236,6 +253,11 @@ export function UsersPage() {
       await deleteUser(confirmDelete.id);
       toast.success("User deleted!");
       setConfirmDelete(null);
+
+      // Se sto eliminando me stesso → logout
+      if (confirmDelete.id === profile?.id) {
+        await logout();
+      }
     } catch (err: any) {
       toast.error(extractError(err));
     } finally {

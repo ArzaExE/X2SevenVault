@@ -48,7 +48,7 @@ export interface Shelf {
 interface WarehouseContextType {
   warehouses: Warehouse[];
   getWarehouseById: (id: string) => Promise<Warehouse | null>;
-  addWarehouse: (data: Omit<Warehouse, "id">) => Promise<void>;
+  addWarehouse: (data: Warehouse) => Promise<void>;
   updateWarehouse: (id: string, data: Partial<Warehouse>) => Promise<void>;
   deleteWarehouse: (id: string) => Promise<void>;
   addAisle: (warehouseId: string, data: { aisle_id: string; name: string; description?: string; is_active?: boolean }) => Promise<void>;
@@ -156,7 +156,7 @@ export function WarehousesProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const addWarehouse = async (data: Omit<Warehouse, "id">) => {
+  const addWarehouse = async (data: Warehouse) => {
     try {
       const res = await createWarehouse(data);
       setWarehouses((prev) => [...prev, res.data]);
