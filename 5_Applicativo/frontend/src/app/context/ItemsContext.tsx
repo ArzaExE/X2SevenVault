@@ -43,7 +43,7 @@ export interface Aisle {
   description: string | null;
   is_active: boolean;
   warehouse_id: string;
-  shelves: Shelf[]; // array di oggetti, non stringhe
+  shelves: Shelf[];
 }
 
 export interface Warehouse {
@@ -54,12 +54,10 @@ export interface Warehouse {
   aisles: Aisle[];
 }
 
-//
-// 🔹 2. CONTEXT TYPE
-//
 interface ItemContextType {
   items: Item[];
   warehouses: Warehouse[];
+  completeWarehouses: Warehouse[];
   loadAisles: (warehouseId: string) => Promise<Aisle[]>;
   loadShelves: (warehouseId: string, aisleId: string) => Promise<Shelf[]>;
   loadCompleteWarehouses: () => Promise<void>;
@@ -72,10 +70,6 @@ interface ItemContextType {
   warehouseLoading: boolean;
 }
 
-
-//
-// 🔹 3. CREATE CONTEXT
-//
 const ItemContext = createContext<ItemContextType | null>(null);
 
 export function ItemsProvider({ children }: { children: ReactNode }) {
@@ -84,17 +78,27 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
   const [warehouseLoading, setWarehouseLoading] = useState(true);
   const warehouseCount = Array.from(new Set(items.map(item => item.warehouse_id))).length;
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+  const [completeWarehouses, setCompleteWarehouses] = useState<Warehouse[]>([]);
   const { user, isGuest } = useAuth();
 
   const loadCompleteWarehouses = async () => {
     setWarehouseLoading(true);
     try {
       const res = await getCompleteWarehouses();
-      setWarehouses(res.data);                  // o res.data.data ?
+      setCompleteWarehouses(res.data);
     } catch (err) {
       console.error("Error loading complete structure:", err);
     } finally {
       setWarehouseLoading(false);
+    }
+  };
+
+  const loadWarehouses = async () => {
+    try {
+      const warehouseRes = await getWarehouses();
+      setWarehouses(warehouseRes.data);
+    } catch (err) {
+      console.error("Error loading warehouses:", err);
     }
   };
 
@@ -107,9 +111,11 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
           const res = await getItems();
           setItems(res.data);
         }
-        // USIAMO IL CARICAMENTO COMPLETO ALL'AVVIO
         if (user && !isGuest) {
-          await loadCompleteWarehouses(); 
+          await Promise.all([
+            loadWarehouses(),
+            loadCompleteWarehouses(),
+          ]);
         }
       } catch (err) {
         console.error("Initialization error:", err);
@@ -121,28 +127,6 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
     loadInitialData();
   }, [user, isGuest]);
 
-  const loadItems = async () => {
-    try {
-      const res = await getItems();
-  
-      setItems(res.data);
-    } catch (err) {
-      console.error("Error loading items:", err);
-    }
-  };
-
-  const loadWarehouses = async () => {
-      try {
-          const warehouseRes = await getWarehouses();
-          const warehouseList = warehouseRes.data;
-
-          setWarehouses(warehouseList);
-      } catch (err) {
-          console.error("Error loading warehouses:", err);
-      }
-  };
-
-
   const loadAisles = async (warehouseId: string): Promise<Aisle[]> => {
     try {
       const res = await getAisles(warehouseId);
@@ -153,7 +137,6 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Funzione per caricare gli scaffali di una specifica corsia
   const loadShelves = async (warehouseId: string, aisleId: string): Promise<Shelf[]> => {
     try {
       const res = await getShelves(warehouseId, aisleId);
@@ -187,7 +170,7 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
 
   const editItem = async (id: string, data: Partial<Item>) => {
     try {
-      const res = await updateItem(id, data);;
+      const res = await updateItem(id, data);
       setItems((prev) =>
         prev.map((item) => (item.id === id ? res.data : item))
       );
@@ -214,6 +197,7 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
       value={{
         items,
         warehouses,
+        completeWarehouses,
         loadCompleteWarehouses,
         loadAisles,
         loadShelves,
@@ -223,17 +207,16 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
         deleteItem: removeItem,
         warehouseCount,
         itemLoading,
-        warehouseLoading
+        warehouseLoading,
       }}
     >
       {children}
     </ItemContext.Provider>
   );
-
 }
 
 export function useItems(): ItemContextType {
-    const context = useContext(ItemContext);
-    if (!context) throw new Error('useItems must be used within a ItemsProvider');
-    return context;
+  const context = useContext(ItemContext);
+  if (!context) throw new Error('useItems must be used within a ItemsProvider');
+  return context;
 }

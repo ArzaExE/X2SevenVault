@@ -133,7 +133,7 @@ class AisleController extends Controller
             return response()->json(['error' => 'Aisle not found'], 404);
         }
 
-        $items = $this->itemController->searchItems($warehouseId);
+        $items = $this->itemController->searchItems($aisleId);
 
         if($items) {
             return response()->json(['error' => "Can't delete aisle with items on it"], 409);

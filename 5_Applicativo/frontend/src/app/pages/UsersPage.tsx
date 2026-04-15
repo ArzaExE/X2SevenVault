@@ -4,6 +4,7 @@ import { useUsers, User } from "../context/UsersContext";
 import { Plus, Trash2, Edit, X, Search, Loader2 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { Navigate } from "react-router";
+import { ConfirmDialog } from "../components/ConfirmDialog";
 
 const extractError = (err: any): string => {
   const data = err.response?.data;
@@ -155,6 +156,14 @@ export function UsersPage() {
   const [isSubmittingEdit, setIsSubmittingEdit] = useState(false);
   const [formData, setFormData]             = useState<FormData>(emptyForm);
 
+  type ConfirmDeleteUserState =
+  | { id: string; name: string }
+  | null;
+
+  const [confirmDelete, setConfirmDelete] = useState<ConfirmDeleteUserState>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  
+
   if (userLoading || authLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-4">
@@ -219,15 +228,18 @@ export function UsersPage() {
     }
   };
 
-  const handleDeleteUser = async (id: string) => {
-    setDeletingUserId(id);
+  const handleConfirmDelete = async () => {
+    if (!confirmDelete) return;
+
+    setIsDeleting(true);
     try {
-      await deleteUser(id);
+      await deleteUser(confirmDelete.id);
       toast.success("User deleted!");
+      setConfirmDelete(null);
     } catch (err: any) {
       toast.error(extractError(err));
     } finally {
-      setDeletingUserId(null);
+      setIsDeleting(false);
     }
   };
 
@@ -329,7 +341,7 @@ export function UsersPage() {
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-blue-400 hover:text-blue-300 hover:bg-blue-950/30 rounded transition-colors">
                             <Edit className="w-4 h-4" /><span className="text-sm">Edit</span>
                           </button>
-                          <button onClick={() => handleDeleteUser(u.id)} disabled={deletingUserId === u.id}
+                          <button  onClick={() => setConfirmDelete({ id: u.id, name: u.full_name })}
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-red-400 hover:text-red-300 hover:bg-red-950/30 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                             {deletingUserId === u.id
                               ? <><Loader2 className="w-4 h-4 animate-spin" /><span className="text-sm">Deleting...</span></>
@@ -371,6 +383,16 @@ export function UsersPage() {
           setFormData={setFormData}
         />
       )}
+
+      <ConfirmDialog
+        isOpen={confirmDelete !== null}
+        title="Delete User"
+        description="This action cannot be undone."
+        itemName={confirmDelete?.name}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setConfirmDelete(null)}
+        isLoading={isDeleting}
+      />
     </>
   );
 }

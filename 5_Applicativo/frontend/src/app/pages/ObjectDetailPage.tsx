@@ -1,7 +1,8 @@
 import { useParams, useNavigate, Navigate } from "react-router";
-import { Item, useItems } from "../context/ItemsContext";
+import { Aisle, Shelf, Item, useItems } from "../context/ItemsContext";
+import { useWarehouses } from "../context/WarehousesContext";
 import { useAuth } from "../context/AuthContext";
-import { ArrowLeft, Package, MapPin, Layers, Weight, Ruler, Maximize, Bot, Edit, Hash, BrainCircuit, Warehouse } from "lucide-react";
+import { ArrowLeft, Package, MapPin, Layers, Weight, Ruler, Maximize, Bot, Edit, Hash, BrainCircuit } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 
@@ -21,7 +22,9 @@ function ActiveToggle({ checked, onChange }: { checked: boolean; onChange: (v: b
 export function ObjectDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { getItemById, deleteItem, itemLoading, updateItem, warehouses } = useItems();
+  const { getItemById, deleteItem, itemLoading, updateItem, completeWarehouses, loadCompleteWarehouses } = useItems();
+  // warehouses per risolvere i nomi in read-only
+  const { warehouses, warehouseLoading } = useWarehouses();
   const { user, isGuest, authLoading } = useAuth();
 
   const [item, setItem] = useState<Item | null>(null);
@@ -30,10 +33,16 @@ export function ObjectDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const [availableAisles, setAvailableAisles] = useState<Aisle[]>([]);
+  const [availableShelves, setAvailableShelves] = useState<Shelf[]>([]);
+
   const emptyForm = {
     id: "",
     name: "",
     description: "",
+    warehouse_id: "",
+    aisle_id: "",
+    shelf_id: "",
     weight_unit: "",
     weight_value: 0,
     width_unit: "",
@@ -52,6 +61,32 @@ export function ObjectDetailPage() {
     setEditForm(data);
   };
 
+  // Usa completeWarehouses per i select del form di edit
+  const handleWarehouseChange = (warehouseId: string) => {
+    const updated = { ...editFormRef.current, warehouse_id: warehouseId, aisle_id: "", shelf_id: "" };
+    updateEditForm(updated);
+    setAvailableShelves([]);
+    const selected = completeWarehouses.find((wh) => wh.id === warehouseId);
+    setAvailableAisles(selected?.aisles || []);
+  };
+
+  const handleAisleChange = (aisleId: string) => {
+    const updated = { ...editFormRef.current, aisle_id: aisleId, shelf_id: "" };
+    updateEditForm(updated);
+    const warehouse = completeWarehouses.find((wh) => wh.id === editFormRef.current.warehouse_id);
+    const selectedAisle = warehouse?.aisles.find((a) => a.id === aisleId);
+    setAvailableShelves(selectedAisle?.shelves || []);
+  };
+
+  // Popola aisles/shelves usando completeWarehouses
+  const populateLocationFromItem = (data: Item) => {
+    const wh = completeWarehouses.find((w) => w.id === data.warehouse_id);
+    const aisles = wh?.aisles || [];
+    setAvailableAisles(aisles);
+    const aisle = aisles.find((a) => a.id === data.aisle_id);
+    setAvailableShelves(aisle?.shelves || []);
+  };
+
   useEffect(() => {
     const fetchItem = async () => {
       if (!id) return;
@@ -62,6 +97,9 @@ export function ObjectDetailPage() {
           id: data.id,
           name: data.name,
           description: data.description || "",
+          warehouse_id: data.warehouse_id,
+          aisle_id: data.aisle_id,
+          shelf_id: data.shelf_id,
           weight_value: data.weight_value,
           weight_unit: data.weight_unit,
           width_unit: data.width_unit,
@@ -76,6 +114,14 @@ export function ObjectDetailPage() {
     };
     fetchItem();
   }, [id]);
+
+  
+  // Usa completeWarehouses per popolare i dropdown
+  useEffect(() => {
+    if (item && completeWarehouses.length > 0) {
+      populateLocationFromItem(item);
+    }
+  }, [completeWarehouses, item]);
 
   if (itemLoading || authLoading || loadingItem) {
     return (
@@ -106,7 +152,11 @@ export function ObjectDetailPage() {
     );
   }
 
-  const location = `${item.warehouse_id}, ${item.aisle_id}-${item.shelf_id}`;
+  // Risolve i nomi usando warehouses (tutte) per la vista read-only
+  const warehouseName = warehouses.find(w => w.id === item.warehouse_id)?.name || item.warehouse_id;
+  const aisleName = warehouses.find(w => w.id === item.warehouse_id)?.aisles.find(a => a.id === item.aisle_id)?.name || item.aisle_id;
+  const shelfName = warehouses.find(w => w.id === item.warehouse_id)?.aisles.find(a => a.id === item.aisle_id)?.shelves.find(s => s.id === item.shelf_id)?.name || item.shelf_id;
+  const location = `${warehouseName}, ${aisleName} - ${shelfName}`;
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -118,6 +168,7 @@ export function ObjectDetailPage() {
       const updatedData = await getItemById(item.id);
       if (updatedData) {
         setItem(updatedData);
+        populateLocationFromItem(updatedData);
       }
       toast.success("Object updated successfully!");
       setIsEditing(false);
@@ -141,6 +192,9 @@ export function ObjectDetailPage() {
       id: item.id,
       name: item.name,
       description: item.description || "",
+      warehouse_id: item.warehouse_id,
+      aisle_id: item.aisle_id,
+      shelf_id: item.shelf_id,
       weight_value: item.weight_value,
       weight_unit: item.weight_unit,
       width_unit: item.width_unit,
@@ -150,7 +204,7 @@ export function ObjectDetailPage() {
       quantity: item.quantity,
       is_ai: item.is_ai,
     });
-    
+    populateLocationFromItem(item);
     setIsEditing(false);
     setError(null);
   };
@@ -216,7 +270,10 @@ export function ObjectDetailPage() {
                   </>
                 ) : (
                   <button
-                    onClick={() => setIsEditing(true)}
+                      onClick={async () => {
+                        loadCompleteWarehouses();
+                        setIsEditing(true);
+                      }}
                     className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     <Edit className="w-4 h-4" />
@@ -242,34 +299,87 @@ export function ObjectDetailPage() {
           <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
             <h2 className="text-white text-lg font-semibold mb-4">Location Information</h2>
             <div className="space-y-4">
-              <div className="flex items-start gap-3">
-                <MapPin className="w-5 h-5 text-zinc-400 mt-0.5" />
-                <div>
-                  <p className="text-zinc-400 text-sm">Full Location</p>
-                  <p className="text-white font-medium">{location}</p>
+
+              {!isEditing && (
+                <div className="flex items-start gap-3">
+                  <MapPin className="w-5 h-5 text-zinc-400 mt-0.5" />
+                  <div>
+                    <p className="text-zinc-400 text-sm">Full Location</p>
+                    <p className="text-white font-medium">{location}</p>
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {/* Warehouse */}
               <div className="flex items-start gap-3">
                 <Package className="w-5 h-5 text-zinc-400 mt-0.5" />
-                <div>
+                <div className="flex-1">
                   <p className="text-zinc-400 text-sm">Warehouse</p>
-                  <p className="text-white font-medium">{item.warehouse_id}</p>
+                  {isEditing ? (
+                    <select
+                      value={editForm.warehouse_id}
+                      onChange={(e) => handleWarehouseChange(e.target.value)}
+                      disabled={warehouseLoading}
+                      className="w-full mt-1 px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-600 disabled:opacity-50"
+                    >
+                      <option value="">{warehouseLoading ? "Loading..." : "Select warehouse"}</option>
+                      {/* usa completeWarehouses per il form */}
+                      {completeWarehouses.map((wh) => (
+                        <option key={wh.id} value={wh.id}>{wh.name}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <p className="text-white font-medium">{item.warehouse_id} - {warehouseName}</p>
+                  )}
                 </div>
               </div>
+
+              {/* Aisle */}
               <div className="flex items-start gap-3">
                 <Layers className="w-5 h-5 text-zinc-400 mt-0.5" />
-                <div>
+                <div className="flex-1">
                   <p className="text-zinc-400 text-sm">Aisle</p>
-                  <p className="text-white font-medium">{item.aisle_id}</p>
+                  {isEditing ? (
+                    <select
+                      value={editForm.aisle_id}
+                      onChange={(e) => handleAisleChange(e.target.value)}
+                      disabled={!editForm.warehouse_id}
+                      className="w-full mt-1 px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-600 disabled:opacity-50"
+                    >
+                      <option value="">Select aisle</option>
+                      {availableAisles.map((a) => (
+                        <option key={a.id} value={a.id}>{a.name}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <p className="text-white font-medium">{item.aisle_id} - {aisleName}</p>
+                  )}
                 </div>
               </div>
+
+              {/* Shelf */}
               <div className="flex items-start gap-3">
                 <Layers className="w-5 h-5 text-zinc-400 mt-0.5" />
-                <div>
+                <div className="flex-1">
                   <p className="text-zinc-400 text-sm">Shelf</p>
-                  <p className="text-white font-medium">{item.shelf_id}</p>
+                  {isEditing ? (
+                    <select
+                      value={editForm.shelf_id}
+                      onChange={(e) => updateEditForm({ ...editFormRef.current, shelf_id: e.target.value })}
+                      disabled={!editForm.aisle_id}
+                      className="w-full mt-1 px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-600 disabled:opacity-50"
+                    >
+                      <option value="">Select shelf</option>
+                      {availableShelves.map((s) => (
+                        <option key={s.id} value={s.id}>{s.name}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <p className="text-white font-medium">{item.shelf_id} - {shelfName}</p>
+                  )}
                 </div>
               </div>
+
             </div>
           </div>
 

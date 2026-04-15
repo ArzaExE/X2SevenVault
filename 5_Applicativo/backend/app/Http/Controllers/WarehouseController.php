@@ -46,33 +46,52 @@ class WarehouseController extends Controller
         $warehouses = $this->firestore->getCollection('warehouse_management');
 
         $completeStructure = array_map(function ($whData) {
+            // --- FILTRO WAREHOUSE ---
+            // Se la warehouse è disattivata, la scartiamo subito
+            if (isset($whData['is_active']) && $whData['is_active'] === false) {
+                return null;
+            }
+
             $warehouseId = $whData['id'];
             $formattedWh = $this->formatWarehouse($whData);
 
             // 1. Recupero le corsie
             $allAisles = $this->firestore->getCollection("warehouse_management/{$warehouseId}/aisles");
 
-            // 2. Mappo e filtro le corsie: tengo solo quelle che hanno almeno uno scaffale
+            // 2. Mappo e filtro le corsie
             $formattedAisles = array_filter(array_map(function ($aisleData) use ($warehouseId) {
+                // --- FILTRO AISLE ---
+                // Se la corsia è disattivata, la scartiamo
+                if (isset($aisleData['is_active']) && $aisleData['is_active'] === false) {
+                    return null;
+                }
+
                 $aisleId = $aisleData['id'];
                 $formattedAisle = $this->formatAisle($aisleData);
 
                 // 3. Recupero gli scaffali
                 $shelves = $this->firestore->getCollection("warehouse_management/{$warehouseId}/aisles/{$aisleId}/shelves");
 
-                // Se non ci sono scaffali, restituisco null (verrà filtrato dopo)
-                if (empty($shelves)) {
+                // --- FILTRO SHELVES ---
+                // Filtriamo gli scaffali attivi
+                $activeShelves = array_filter(array_map(function ($shelfData) {
+                    if (isset($shelfData['is_active']) && $shelfData['is_active'] === false) {
+                        return null;
+                    }
+                    return $this->formatShelf($shelfData);
+                }, $shelves));
+
+                // Se non ci sono scaffali attivi, la corsia non deve essere mostrata
+                if (empty($activeShelves)) {
                     return null;
                 }
 
-                $formattedAisle['shelves'] = array_map(function ($shelfData) {
-                    return $this->formatShelf($shelfData);
-                }, $shelves);
-
+                $formattedAisle['shelves'] = array_values($activeShelves);
                 return $formattedAisle;
+
             }, $allAisles));
 
-            // Se dopo il filtro non sono rimaste corsie valide, restituisco null
+            // Se dopo il filtro non sono rimaste corsie valide, la warehouse sparisce
             if (empty($formattedAisles)) {
                 return null;
             }
@@ -82,7 +101,7 @@ class WarehouseController extends Controller
 
         }, $warehouses);
 
-        // 4. Filtro finale: tengo solo le warehouse che non sono null
+        // 4. Filtro finale: rimuove tutti i null generati sopra
         $result = array_values(array_filter($completeStructure));
 
         return response()->json($result);

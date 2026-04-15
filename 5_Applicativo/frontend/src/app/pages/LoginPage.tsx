@@ -43,6 +43,7 @@ export function LoginPage() {
       try {
         await login(email, password);
       } catch (err: any) {
+          console.error("Login error:", err);
           switch (err.code) {
               case 'auth/invalid-credential':
                   setError("Invalid credentials");

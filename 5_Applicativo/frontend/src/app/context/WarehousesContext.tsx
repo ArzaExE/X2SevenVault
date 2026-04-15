@@ -290,15 +290,19 @@ export function WarehousesProvider({ children }: { children: ReactNode }) {
     }
   };
 
-    const removeShelf = async (warehouseId: string, aisleId: string, shelfId: string) => {
+  const removeShelf = async (warehouseId: string, aisleId: string, shelfId: string) => {
     try {
       await deleteShelf(warehouseId, aisleId, shelfId);
       setWarehouses((prev) => prev.map((warehouse) => ({
         ...warehouse,
-        aisles: warehouse.aisles.filter((aisle) => aisle.id !== aisleId)
+        aisles: warehouse.aisles.map((aisle) =>
+          aisle.id === aisleId
+            ? { ...aisle, shelves: aisle.shelves.filter((s) => s.id !== shelfId) }
+            : aisle
+        )
       })));
     } catch (err) {
-      console.error("Error deleting aisle:", err);
+      console.error("Error deleting shelf:", err);
       throw err;
     }
   };

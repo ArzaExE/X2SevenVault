@@ -126,10 +126,18 @@ class UserController extends Controller
     {
         $validated = $request->validated();
         // Crea utente su Firebase Auth
-        $firebaseUser = $this->auth->createUserWithEmailAndPassword(
-            $validated['email'],
-            $validated['password']
-        );
+        try {
+            $firebaseUser = $this->auth->createUserWithEmailAndPassword(
+                $validated['email'],
+                $validated['password']
+            );
+        } catch (\Kreait\Firebase\Exception\Auth\EmailExists $e) {
+            return response()->json(['error' => 'Email already in use'], 409);
+        } catch (\Kreait\Firebase\Exception\AuthException $e) {
+            return response()->json(['error' => 'Authentication error: ' . $e->getMessage()], 400);
+        } catch (\Throwable $e) {
+            return response()->json(['error' => 'Unexpected error: ' . $e->getMessage()], 500);
+        }
 
         $id = $firebaseUser->uid;
 
@@ -178,9 +186,6 @@ class UserController extends Controller
             $user['full_name'] = $validated['full_name'];
         }
 
-        if (isset($validated['email'])) {
-            $user['email'] = $validated['email'];
-        }
 
         if (isset($validated['role_name'])) {
             $user['role'] = [
@@ -190,18 +195,45 @@ class UserController extends Controller
             ];
         }
 
-        if (isset($validated['is_active'])) {
-            if (!$validated['is_active']) {
-                $this->auth->updateUser($id, [
-                    'disabled' => true,
-                ]);
-            } else{
-                $this->auth->updateUser($id, [
-                    'disabled' => false,
-                ]);
+        if ($user['role']['role_name'] == 'admin' && $user['is_active']){
+            $users = $this->firestore->getCollection('user_management');
+
+            $admins = array_filter($users, function($user) {
+                return isset($user['role']['role_name']) && $user['role']['role_name'] === 'admin' && $user['is_active'];
+            });
+
+            $adminCount = count($admins);
+
+            if ($adminCount == 1){
+                return response()->json(['error' => "You are the only admin, you can't disable yourself"], 403);
             }
-            $user['is_active'] = $validated['is_active'];
         }
+
+        try {
+            if (isset($validated['is_active'])) {
+                if (!$validated['is_active']) {
+                    $this->auth->updateUser($id, [
+                        'disabled' => true,
+                    ]);
+                } else{
+                    $this->auth->updateUser($id, [
+                        'disabled' => false,
+                    ]);
+                }
+                $user['is_active'] = $validated['is_active'];
+            }
+            if (isset($validated['email'])) {
+                $this->auth->updateUser($id, ['email' => $validated['email']]);
+                $user['email'] = $validated['email'];
+            }
+        } catch (\Kreait\Firebase\Exception\Auth\EmailExists $e) {
+            return response()->json(['error' => 'Email already in use'], 409);
+        } catch (\Kreait\Firebase\Exception\AuthException $e) {
+            return response()->json(['error' => 'Authentication error: ' . $e->getMessage()], 400);
+        } catch (\Throwable $e) {
+            return response()->json(['error' => 'Unexpected error: ' . $e->getMessage()], 500);
+        }
+
 
         unset($user['id']);
 

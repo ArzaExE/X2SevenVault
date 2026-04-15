@@ -3,22 +3,15 @@ import { useWarehouses } from "../context/WarehousesContext";
 import { Plus, Trash2, Package, X, Edit, Info, Loader2 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
+import { ConfirmDialog } from "../components/ConfirmDialog"; // adatta il path
 
 const extractError = (err: any): string => {
   const data = err.response?.data;
-
-  // 1. Controlla la chiave 'error' (quella che usi in Laravel)
   if (data?.error) return data.error;
-
-  // 2. Controlla 'detail' (spesso usato da FastAPI o librerie di validazione)
   if (data?.detail) {
-    if (Array.isArray(data.detail)) {
-      return data.detail.map((d: { msg: string }) => d.msg).join(", ");
-    }
+    if (Array.isArray(data.detail)) return data.detail.map((d: { msg: string }) => d.msg).join(", ");
     return data.detail;
   }
-
-  // 3. Fallback su 'message' (standard Laravel per eccezioni non gestite) o errore generico
   return data?.message ?? err.message ?? "An unexpected error occurred.";
 };
 
@@ -102,6 +95,13 @@ function DialogActions({ onCancel, submitLabel, isSubmitting }: { onCancel: () =
   );
 }
 
+// ─── Tipo per il confirm dialog ───────────────────────────────────────────────
+type ConfirmDeleteState =
+  | { type: "warehouse"; warehouseId: string; name: string }
+  | { type: "aisle";     warehouseId: string; aisleId: string; name: string }
+  | { type: "shelf";     warehouseId: string; aisleId: string; shelfId: string; name: string }
+  | null;
+
 export function WarehousePage() {
   const {
     warehouses, addWarehouse, updateWarehouse, deleteWarehouse, deleteAisle, deleteShelf,
@@ -115,7 +115,6 @@ export function WarehousePage() {
   const [isAddShelfOpen, setIsAddShelfOpen]           = useState(false);
   const [isEditShelfOpen, setIsEditShelfOpen]         = useState(false);
 
-  // Loading states per ogni operazione
   const [isSubmittingAddWarehouse, setIsSubmittingAddWarehouse]   = useState(false);
   const [isSubmittingEditWarehouse, setIsSubmittingEditWarehouse] = useState(false);
   const [isSubmittingAddAisle, setIsSubmittingAddAisle]           = useState(false);
@@ -136,9 +135,34 @@ export function WarehousePage() {
   const [editAisleForm, setEditAisleForm]         = useState({ id: "", name: "", description: "", is_active: true });
   const [editShelfForm, setEditShelfForm]         = useState({ id: "", aisleId: "", name: "", description: "", is_active: true });
 
-  const [deletingWarehouseId, setDeletingWarehouseId] = useState<string | null>(null);
-  const [deletingAisleId, setDeletingAisleId] = useState<string | null>(null);
-  const [deletingShelfId, setDeletingShelfId] = useState<string | null>(null);
+  // ─── Confirm delete ──────────────────────────────────────────────────────────
+  const [confirmDelete, setConfirmDelete] = useState<ConfirmDeleteState>(null);
+  const [isDeleting, setIsDeleting]       = useState(false);
+
+  const handleConfirmDelete = async () => {
+    if (!confirmDelete) return;
+    setIsDeleting(true);
+    try {
+      if (confirmDelete.type === "warehouse") {
+        await deleteWarehouse(confirmDelete.warehouseId);
+        if (selectedWarehouse === confirmDelete.warehouseId)
+          setSelectedWarehouse(warehouses.find(w => w.id !== confirmDelete.warehouseId)?.id ?? null);
+        toast.success("Warehouse deleted!");
+      } else if (confirmDelete.type === "aisle") {
+        await deleteAisle(confirmDelete.warehouseId, confirmDelete.aisleId);
+        if (selectedAisle === confirmDelete.aisleId) setSelectedAisle(null);
+        toast.success("Aisle deleted!");
+      } else if (confirmDelete.type === "shelf") {
+        await deleteShelf(confirmDelete.warehouseId, confirmDelete.aisleId, confirmDelete.shelfId);
+        toast.success("Shelf deleted!");
+      }
+      setConfirmDelete(null);
+    } catch (err: any) {
+      toast.error(extractError(err));
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const { authLoading } = useAuth();
 
@@ -305,27 +329,13 @@ export function WarehousePage() {
                       <Edit className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={async (e) => {
+                      onClick={(e) => {
                         e.stopPropagation();
-                        setDeletingWarehouseId(warehouse.id);
-                        try {
-                          await deleteWarehouse(warehouse.id);
-                          if (selectedWarehouse === warehouse.id)
-                            setSelectedWarehouse(warehouses[0]?.id || null);
-                          toast.success("Warehouse deleted!");
-                        } catch (err: any) {
-                          toast.error(extractError(err));
-                        } finally {
-                          setDeletingWarehouseId(null);
-                        }
+                        setConfirmDelete({ type: "warehouse", warehouseId: warehouse.id, name: warehouse.name });
                       }}
-                      disabled={deletingWarehouseId === warehouse.id}
-                      className="text-red-400 hover:text-red-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="text-red-400 hover:text-red-300 transition-colors"
                     >
-                      {deletingWarehouseId === warehouse.id
-                        ? <Loader2 className="w-4 h-4 animate-spin" />
-                        : <Trash2 className="w-4 h-4" />
-                      }
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
@@ -374,27 +384,14 @@ export function WarehousePage() {
                             <Plus className="w-3 h-3" /> Add Shelf
                           </button>
                           <button
-                            onClick={async (e) => {
+                            onClick={(e) => {
                               e.stopPropagation();
                               if (!selectedWarehouse) return;
-                              setDeletingAisleId(aisle.id);
-                              try {
-                                await deleteAisle(selectedWarehouse, aisle.id);
-                                if (selectedAisle === aisle.id) setSelectedAisle(null);
-                                toast.success("Aisle deleted!");
-                              } catch (err: any) {
-                                toast.error(extractError(err));
-                              } finally {
-                                setDeletingAisleId(null);
-                              }
+                              setConfirmDelete({ type: "aisle", warehouseId: selectedWarehouse, aisleId: aisle.id, name: aisle.name });
                             }}
-                            disabled={deletingAisleId === aisle.id}
-                            className="p-1 text-red-400 hover:text-red-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="p-1 text-red-400 hover:text-red-300 transition-colors"
                           >
-                            {deletingAisleId === aisle.id
-                              ? <Loader2 className="w-4 h-4 animate-spin" />
-                              : <Trash2 className="w-4 h-4" />
-                            }
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                       </div>
@@ -413,25 +410,13 @@ export function WarehousePage() {
                               <Edit className="w-3 h-3" />
                             </button>
                             <button
-                              onClick={async () => {
+                              onClick={() => {
                                 if (!selectedWarehouse) return;
-                                setDeletingShelfId(shelf.id);
-                                try {
-                                  await deleteShelf(selectedWarehouse, aisle.id, shelf.id);
-                                  toast.success("Shelf deleted!");
-                                } catch (err: any) {
-                                  toast.error(extractError(err));
-                                } finally {
-                                  setDeletingShelfId(null);
-                                }
+                                setConfirmDelete({ type: "shelf", warehouseId: selectedWarehouse, aisleId: aisle.id, shelfId: shelf.id, name: shelf.name });
                               }}
-                              disabled={deletingShelfId === shelf.id}
-                              className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                              className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-300 transition-all"
                             >
-                              {deletingShelfId === shelf.id
-                                ? <Loader2 className="w-3 h-3 animate-spin" />
-                                : <X className="w-3 h-3" />
-                              }
+                              <X className="w-3 h-3" />
                             </button>
                           </div>
                         ))}
@@ -452,6 +437,21 @@ export function WarehousePage() {
           </div>
         </div>
       </div>
+
+      {/* ── Confirm Delete Dialog ── */}
+      <ConfirmDialog
+        isOpen={confirmDelete !== null}
+        title={
+          confirmDelete?.type === "warehouse" ? "Delete Warehouse" :
+          confirmDelete?.type === "aisle"     ? "Delete Aisle" :
+                                                "Delete Shelf"
+        }
+        description="This action cannot be undone."
+        itemName={confirmDelete?.name}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setConfirmDelete(null)}
+        isLoading={isDeleting}
+      />
 
       {/* ── Add Warehouse ── */}
       {isAddWarehouseOpen && (

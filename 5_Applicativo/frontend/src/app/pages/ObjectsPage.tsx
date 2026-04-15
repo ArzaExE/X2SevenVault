@@ -4,16 +4,26 @@ import { AddObjectDialog } from "../components/AddObjectDialog";
 import { useItems } from "../context/ItemsContext";
 import { useAuth } from "../context/AuthContext";
 import { Search, Plus } from "lucide-react";
-import { Navigate } from "react-router";
+import { Navigate, useNavigate } from "react-router";
 import { toast } from "react-hot-toast";
+import { ConfirmDialog } from "../components/ConfirmDialog";
 
 export function ObjectsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const { items, warehouses, warehouseCount, addItem, deleteItem, itemLoading } = useItems();
+  const { items, warehouses, warehouseCount, addItem, deleteItem, itemLoading, loadCompleteWarehouses } = useItems();
   const { user, isGuest, authLoading } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [confirmId, setConfirmId] = useState<string | null>(null);
+
+  const navigate = useNavigate();
+
+
+  const handleRowClick = (id: string) => {
+    loadCompleteWarehouses(); // fire and forget, non aspettiamo
+    navigate(`/object/${id}`);
+  };
 
   if (itemLoading || authLoading) {
     return (
@@ -37,20 +47,18 @@ export function ObjectsPage() {
       obj.shelf_id.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this object?")) return;
-    setError(null);
+  const handleDelete = async () => {
+    if (!confirmId) return;
     setIsDeleting(true);
-
     try {
-      await deleteItem(id);
+      await deleteItem(confirmId);
       toast.success("Object deleted successfully");
     } catch (err: any) {
       const msg = err.response?.data?.message || "Error deleting object";
-      setError(msg);
       toast.error(msg);
     } finally {
       setIsDeleting(false);
+      setConfirmId(null);
     }
   };
 
@@ -120,7 +128,8 @@ export function ObjectsPage() {
         {/* Data Table */}
         <DataTable 
           items={filteredObjects} 
-          onDelete={isGuest ? async () => {} : handleDelete} 
+          onDelete={isGuest ? async () => {} : async (id) => setConfirmId(id)} 
+          onRowClick={handleRowClick}
           isReadOnly={isGuest} 
         />
       </div>
@@ -133,6 +142,15 @@ export function ObjectsPage() {
           onClose={() => setIsAddDialogOpen(false)}
           onAdd={addItem}
           warehouses={warehouses} // Ora sarà piena solo per gli utenti loggati
+        />
+      )}
+      {!isGuest && (
+        <ConfirmDialog
+          isOpen={!!confirmId}
+          itemName={items.find(i => i.id === confirmId)?.name}
+          onConfirm={handleDelete}
+          onCancel={() => setConfirmId(null)}
+          isLoading={isDeleting}
         />
       )}
     </>

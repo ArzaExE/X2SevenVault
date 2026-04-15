@@ -24,7 +24,7 @@ function AIToggle({ checked, onChange }: { checked: boolean; onChange: (v: boole
 }
 
 export function AddObjectDialog({ isOpen, onClose, onAdd }: AddObjectDialogProps) {
-  const { warehouseLoading, loadCompleteWarehouses, warehouses } = useItems();
+  const { warehouseLoading, loadCompleteWarehouses, completeWarehouses } = useItems();
   
   const [formData, setFormData] = useState<Omit<Item, "id">>({
     name: "",
@@ -48,7 +48,7 @@ export function AddObjectDialog({ isOpen, onClose, onAdd }: AddObjectDialogProps
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (isOpen && warehouses.length === 0) {
+    if (isOpen) {
       loadCompleteWarehouses().catch(err => {
         console.error("Errore nel caricamento magazzini:", err);
       });
@@ -60,7 +60,7 @@ export function AddObjectDialog({ isOpen, onClose, onAdd }: AddObjectDialogProps
     setFormData(prev => ({ ...prev, warehouse_id: warehouseId, aisle_id: "", shelf_id: "" }));
     setAvailableShelves([]);
 
-    const selected = warehouses.find((wh) => wh.id === warehouseId);
+    const selected = completeWarehouses.find((wh) => wh.id === warehouseId);
     setAvailableAisles(selected?.aisles || []);
   };
 
@@ -68,7 +68,7 @@ export function AddObjectDialog({ isOpen, onClose, onAdd }: AddObjectDialogProps
   const handleAisleChange = (aisleId: string) => {
     setFormData(prev => ({ ...prev, aisle_id: aisleId, shelf_id: "" }));
 
-    const warehouse = warehouses.find((wh) => wh.id === formData.warehouse_id);
+    const warehouse = completeWarehouses.find((wh) => wh.id === formData.warehouse_id);
     const selectedAisle = warehouse?.aisles.find((a) => a.id === aisleId);
     setAvailableShelves(selectedAisle?.shelves || []);
   };
@@ -152,7 +152,7 @@ export function AddObjectDialog({ isOpen, onClose, onAdd }: AddObjectDialogProps
                 disabled={warehouseLoading}
               >
                 <option value="">{warehouseLoading ? "Loading..." : "Select warehouse"}</option>
-                {warehouses.map((wh) => (
+                {completeWarehouses.map((wh) => (
                   <option key={wh.id} value={wh.id}>{wh.name}</option>
                 ))}
               </select>

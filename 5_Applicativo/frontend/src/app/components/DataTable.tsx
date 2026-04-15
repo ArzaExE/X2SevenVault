@@ -6,10 +6,11 @@ import { useState } from "react"; // Aggiunto useState
 interface DataTableProps {
   items: Item[];
   onDelete: (id: string) => Promise<void>; // Cambiato in Promise per gestire l'attesa
+  onRowClick?: (id: string) => void;
   isReadOnly?: boolean;
 }
 
-export function DataTable({ items, onDelete, isReadOnly = false }: DataTableProps) {
+export function DataTable({ items, onDelete, onRowClick, isReadOnly = false }: DataTableProps) {
   const navigate = useNavigate();
   // Stato per tracciare l'ID dell'oggetto che stiamo eliminando
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -51,7 +52,7 @@ export function DataTable({ items, onDelete, isReadOnly = false }: DataTableProp
               items.map((item) => (
                 <tr
                   key={item.id}
-                  onClick={() => !deletingId && navigate(`/object/${item.id}`)}
+                  onClick={() => !deletingId && onRowClick ? onRowClick(item.id) : navigate(`/object/${item.id}`)}
                   className={`transition-colors cursor-pointer ${
                     deletingId === item.id ? "bg-red-950/10" : "hover:bg-zinc-800/50"
                   }`}

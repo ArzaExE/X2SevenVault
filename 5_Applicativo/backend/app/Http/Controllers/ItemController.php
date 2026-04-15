@@ -67,6 +67,8 @@ class ItemController extends Controller
             $ai_class_id = $this->generateAiId();
         }
 
+
+
         $id = $this->firestore->createDocument('item_management', array_merge(
             \Arr::only($validated, ['name', 'aisle_id', 'description', 'quantity', 'shelf_id', 'warehouse_id']),
             ['is_ai'   => $validated['is_ai'] ?? false],
@@ -74,6 +76,8 @@ class ItemController extends Controller
             ['is_active' => $validated['is_active'] ?? true],
             ['physical_properties' => $physicalProperties]
         ));
+
+
 
         if (!$id) {
             return response()->json(['error' => 'Error while creating item'], 500);
