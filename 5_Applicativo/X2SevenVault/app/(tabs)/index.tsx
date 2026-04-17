@@ -15,10 +15,10 @@ import {
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
-const LABELS = process.env.EXPO_PUBLIC_LABELS?.split(",") ?? [];
-const NUM_BOXES = Number(process.env.EXPO_PUBLIC_NUM_BOXES);
-const THRESHOLD = Number(process.env.EXPO_PUBLIC_THRESHOLD)
-const IOU_THRESHOLD = Number(process.env.EXPO_PUBLIC_IOU_THRESHOLD);
+const LABELS = process.env.EXPO_PUBLIC_LABELS?.split(",") ?? []; // ID delle classi (ai_class_ids)
+const NUM_BOXES = Number(process.env.EXPO_PUBLIC_NUM_BOXES); // Numero massimo di box restituiti dal modello
+const THRESHOLD = Number(process.env.EXPO_PUBLIC_THRESHOLD); // Soglia di confidenza minima per considerare una rilevazione valida
+const IOU_THRESHOLD = Number(process.env.EXPO_PUBLIC_IOU_THRESHOLD); // Soglia di sovrapposizione (IoU) per la non-maxima suppression
 
 interface Detection {
   classId: string;
@@ -34,23 +34,27 @@ function iou(a: Detection, b: Detection): number {
   const ay2 = a.y1 + a.height;
   const bx2 = b.x1 + b.width;
   const by2 = b.y1 + b.height;
+  // Calcola area di intersezione
   const interX1 = Math.max(a.x1, b.x1);
   const interY1 = Math.max(a.y1, b.y1);
   const interX2 = Math.min(ax2, bx2);
   const interY2 = Math.min(ay2, by2);
   const interArea =
     Math.max(0, interX2 - interX1) * Math.max(0, interY2 - interY1);
+  // IoU = intersezione / unione
   const aArea = a.width * a.height;
   const bArea = b.width * b.height;
   return interArea / (aArea + bArea - interArea);
 }
 
 function nms(detections: Detection[]): Detection[] {
-  const sorted = [...detections].sort((a, b) => b.confidence - a.confidence);
+  // Ordina per confidenza decrescente. ...copia di detections
+  const sorted = [...detections].sort((a, b) => b.confidence - a.confidence); // Risultato positivo b > a, ordine decrescente
   const result: Detection[] = [];
   for (const det of sorted) {
     if (
-      !result.some(
+      // Scarta se già coperto da un rilevamento migliore
+      !result.some( //.some() restituisce true se almeno un elemento soddisfa la condizione
         (r) => r.classId === det.classId && iou(r, det) > IOU_THRESHOLD
       )
     ) {
@@ -91,14 +95,16 @@ export default function HomeScreen() {
       const raw: Detection[] = [];
 
       for (let i = 0; i < NUM_BOXES; i++) {
-        const cx = result[0 * NUM_BOXES + i];
-        const cy = result[1 * NUM_BOXES + i];
-        const w = result[2 * NUM_BOXES + i];
-        const h = result[3 * NUM_BOXES + i];
+        const cx = result[0 * NUM_BOXES + i]; // Centro X del box
+        const cy = result[1 * NUM_BOXES + i]; // Centro Y del box
+        const w = result[2 * NUM_BOXES + i]; // Larghezza del box
+        const h = result[3 * NUM_BOXES + i]; // Altezza del box
 
+        // Punteggi per ogni classe
         let maxScore = 0;
         let maxClass = 0;
         for (let c = 0; c < LABELS.length; c++) {
+          // Parte da 4 perchè i primi 4 valori sono cx, cy, w, h
           const score = result[(4 + c) * NUM_BOXES + i];
           if (score > maxScore) {
             maxScore = score;
@@ -108,6 +114,7 @@ export default function HomeScreen() {
 
         if (maxScore < THRESHOLD) continue;
 
+        // Assegnazione dei risultati all'interfaccia Detection
         raw.push({
           classId: LABELS[maxClass],
           confidence: maxScore,

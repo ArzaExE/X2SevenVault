@@ -186,7 +186,7 @@ export default function ModalScreen() {
             <View style={styles.zoneDivider} />
             <View style={styles.zoneBox}>
               <Text style={styles.zoneLabel}>SHELF</Text>
-              <Text style={styles.zoneValue}>{item?.shelf_id?.split("_").slice(1).join(" ") ?? "N/A"}</Text>
+              <Text style={styles.zoneValue}>{item?.shelf_id ?? "N/A"}</Text>
             </View>
             <View style={styles.zoneDivider} />
             <View style={styles.zoneBox}>
