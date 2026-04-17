@@ -11,8 +11,10 @@ export function LoginPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
-  const { login, user, loginAsGuest, authLoading } = useAuth();
+  const { login, user, loginAsGuest, authLoading, resetPassword } = useAuth();
   const navigate = useNavigate();
+  const [resetSent, setResetSent] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
 
   if (authLoading) {
     return (
@@ -55,6 +57,32 @@ export function LoginPage() {
                   setError("Error during login, please try again later");
           }
       }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      setError("Enter your email address first");
+      return;
+    }
+    setResetLoading(true);
+    try {
+      await resetPassword(email);
+      setResetSent(true);
+      setError("");
+    } catch (err: any) {
+      switch (err.code) {
+        case 'auth/user-not-found':
+          setError("No account found with this email");
+          break;
+        case 'auth/invalid-email':
+          setError("Invalid email address");
+          break;
+        default:
+          setError("Error sending reset email, try again later");
+      }
+    } finally {
+      setResetLoading(false);
+    }
   };
 
   return (
@@ -116,6 +144,23 @@ export function LoginPage() {
                 </button>
               </div>
             </div>
+
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                disabled={resetLoading}
+                className="text-sm text-blue-400 hover:text-blue-300 transition-colors disabled:opacity-50"
+              >
+                {resetLoading ? "Sending..." : "Forgot password?"}
+              </button>
+            </div>
+
+            {resetSent && (
+              <div className="bg-green-950/50 border border-green-900 rounded-lg p-3">
+                <p className="text-green-400 text-sm">Reset email sent! Check your inbox.</p>
+              </div>
+            )}
 
             {error && (
               <div className="bg-red-950/50 border border-red-900 rounded-lg p-3">

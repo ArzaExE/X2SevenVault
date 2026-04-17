@@ -208,6 +208,7 @@ export function AddObjectDialog({ isOpen, onClose, onAdd }: AddObjectDialogProps
                   onChange={(e) => setFormData({ ...formData, weight_unit: e.target.value })}
                   className="w-24 bg-zinc-700 border border-zinc-700 border-l-0 rounded-r-lg text-white focus:outline-none px-2"
                 >
+                  <option value="g">g</option>
                   <option value="kg">kg</option>
                   <option value="lbs">lbs</option>
                 </select>

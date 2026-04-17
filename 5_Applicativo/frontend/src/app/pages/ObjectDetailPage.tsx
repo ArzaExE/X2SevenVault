@@ -79,13 +79,15 @@ export function ObjectDetailPage() {
   };
 
   // Popola aisles/shelves usando completeWarehouses
-  const populateLocationFromItem = (data: Item) => {
-    const wh = completeWarehouses.find((w) => w.id === data.warehouse_id);
-    const aisles = wh?.aisles || [];
-    setAvailableAisles(aisles);
-    const aisle = aisles.find((a) => a.id === data.aisle_id);
-    setAvailableShelves(aisle?.shelves || []);
-  };
+  // const populateLocationFromItem = (data: Item) => {
+  //   const wh = completeWarehouses.find((w) => w.id === data.warehouse_id);
+  //   const aisles = wh?.aisles || [];
+  //   setAvailableAisles(aisles);
+  //   const aisle = aisles.find((a) => a.id === data.aisle_id);
+  //   setAvailableShelves(aisle?.shelves || []);
+  // };
+
+  const hasPopulatedLocation = useRef(false);
 
   useEffect(() => {
     const fetchItem = async () => {
@@ -101,10 +103,10 @@ export function ObjectDetailPage() {
           aisle_id: data.aisle_id,
           shelf_id: data.shelf_id,
           weight_value: data.weight_value,
-          weight_unit: data.weight_unit,
-          width_unit: data.width_unit,
+          weight_unit: ["g", "kg", "lbs"].includes(data.weight_unit) ? data.weight_unit : "kg",
+          width_unit: ["cm", "mm", "m"].includes(data.width_unit) ? data.width_unit : "cm",
           width_value: data.width_value,
-          height_unit: data.height_unit,
+          height_unit: ["cm", "mm", "m"].includes(data.height_unit) ? data.height_unit : "cm",
           height_value: data.height_value,
           quantity: data.quantity,
           is_ai: data.is_ai,
@@ -112,17 +114,24 @@ export function ObjectDetailPage() {
       }
       setLoadingItem(false);
     };
+
     fetchItem();
-  }, [id]);
+  }, [id]); // ← dipende solo da id, NON da completeWarehouses
+
+  // Effect separato solo per popolare i dropdown, eseguito una volta sola
+  useEffect(() => {
+    if (!item || completeWarehouses.length === 0 || hasPopulatedLocation.current) return;
+
+    const wh = completeWarehouses.find((w) => w.id === item.warehouse_id);
+    const aisles = wh?.aisles || [];
+    setAvailableAisles(aisles);
+    const aisle = aisles.find((a) => a.id === item.aisle_id);
+    setAvailableShelves(aisle?.shelves || []);
+
+    hasPopulatedLocation.current = true; // non rieseguire mai più
+  }, [item, completeWarehouses]);
 
   
-  // Usa completeWarehouses per popolare i dropdown
-  useEffect(() => {
-    if (item && completeWarehouses.length > 0) {
-      populateLocationFromItem(item);
-    }
-  }, [completeWarehouses, item]);
-
   if (itemLoading || authLoading || loadingItem) {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-4">
@@ -168,7 +177,7 @@ export function ObjectDetailPage() {
       const updatedData = await getItemById(item.id);
       if (updatedData) {
         setItem(updatedData);
-        populateLocationFromItem(updatedData);
+        // populateLocationFromItem(updatedData);
       }
       toast.success("Object updated successfully!");
       setIsEditing(false);
@@ -204,7 +213,14 @@ export function ObjectDetailPage() {
       quantity: item.quantity,
       is_ai: item.is_ai,
     });
-    populateLocationFromItem(item);
+
+    const wh = completeWarehouses.find((w) => w.id === item.warehouse_id);
+    const aisles = wh?.aisles || [];
+    setAvailableAisles(aisles);
+    const aisle = aisles.find((a) => a.id === item.aisle_id);
+    setAvailableShelves(aisle?.shelves || []);
+
+    hasPopulatedLocation.current = false;
     setIsEditing(false);
     setError(null);
   };
@@ -426,6 +442,7 @@ export function ObjectDetailPage() {
                         onChange={(e) => updateEditForm({ ...editFormRef.current, weight_unit: e.target.value })}
                         className="w-20 bg-zinc-700 border border-zinc-700 border-l-0 rounded-r text-white focus:outline-none px-1 text-sm"
                       >
+                        <option value="g">g</option>
                         <option value="kg">kg</option>
                         <option value="lbs">lbs</option>
                       </select>

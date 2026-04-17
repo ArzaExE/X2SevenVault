@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { onAuthStateChanged, signInWithEmailAndPassword, signOut, User } from 'firebase/auth';
+import { onAuthStateChanged, signInWithEmailAndPassword, signOut, User, sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../config/firebase';
 import api from '../config/axios';
 
@@ -17,6 +17,7 @@ interface AuthContextType {
     authLoading: boolean;
     login: (email: string, password: string) => Promise<void>;
     logout: () => Promise<void>;
+    resetPassword: (email: string) => Promise<void>;
     loginAsGuest: () => void;
     refreshProfile: () => Promise<void>;
     isGuest: boolean;
@@ -82,6 +83,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    const resetPassword = async (email: string): Promise<void> => {
+        await sendPasswordResetEmail(auth, email);
+    };
+
     const login = async (email: string, password: string): Promise<void> => {
         try {
             setAuthLoading(true);
@@ -123,6 +128,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             isGuest, 
             authLoading, 
             login, 
+            resetPassword,
             loginAsGuest, 
             logout,
             refreshProfile 

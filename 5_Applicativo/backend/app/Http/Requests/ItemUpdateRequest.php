@@ -41,7 +41,7 @@ class ItemUpdateRequest extends FormRequest
             'width_value'  => 'sometimes|numeric|min:0|max:10000',
 
             'height_unit'   => 'sometimes|string|in:cm,mm,m',
-            'weight_unit'   => 'sometimes|string|in:kg,lbs',
+            'weight_unit'   => 'sometimes|string|in:g,kg,lbs',
             'width_unit'    => 'sometimes|string|in:cm,mm,m',
         ];
 

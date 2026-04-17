@@ -45,7 +45,7 @@ class ItemStoreRequest extends FormRequest
 
             // Puoi usare 'in:cm,mm,m' per restringere le unità permesse
             'height_unit'   => 'required|string|in:cm,mm,m',
-            'weight_unit'   => 'required|string|in:kg,lbs',
+            'weight_unit'   => 'required|string|in:g,kg,lbs',
             'width_unit'    => 'required|string|in:cm,mm,m',
         ];
     }

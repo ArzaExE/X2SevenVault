@@ -130,13 +130,13 @@ class WarehouseController extends Controller
     {
         $validated = $request->validated();
 
-        $warehouse = $this->firestore->getDocument('warehouse_management', $validated['warehouse_id']);
+        $warehouse = $this->firestore->getDocument('warehouse_management', $validated['id']);
 
         if ($warehouse) {
-            return response()->json(['error' => "Warehouse with id {$validated['warehouse_id']} already exists."], 409);
+            return response()->json(['error' => "Warehouse with id {$validated['id']} already exists."], 409);
         }
 
-        $store = $this->firestore->setDocument('warehouse_management', $validated['warehouse_id'], [
+        $store = $this->firestore->setDocument('warehouse_management', $validated['id'], [
             'name'        => $validated['name'],
             'description' => $validated['description'] ?? null,
             'is_active'   => $validated['is_active'] ?? true,
@@ -146,7 +146,7 @@ class WarehouseController extends Controller
             return response()->json(['error' => 'Error while creating warehouse'], 500);
         }
 
-        $warehouse = $this->firestore->getDocument('warehouse_management', $validated['warehouse_id']);
+        $warehouse = $this->firestore->getDocument('warehouse_management', $validated['id']);
         return response()->json($this->formatWarehouse($warehouse), 201);
     }
 
