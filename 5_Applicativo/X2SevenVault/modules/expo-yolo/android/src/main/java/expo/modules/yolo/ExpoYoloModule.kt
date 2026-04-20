@@ -118,25 +118,5 @@ class ExpoYoloModule : Module() {
       interpreter!!.close()
     }
 
-    Constant("PI") {
-      Math.PI
-    }
-
-    Events("onChange")
-
-    Function("hello") {
-      "Hello world! 👋"
-    }
-
-    AsyncFunction("setValueAsync") { value: String ->
-      sendEvent("onChange", mapOf("value" to value))
-    }
-
-    View(ExpoYoloView::class) {
-      Prop("url") { view: ExpoYoloView, url: URL ->
-        view.webView.loadUrl(url.toString())
-      }
-      Events("onLoad")
-    }
   }
 }

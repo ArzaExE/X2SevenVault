@@ -135,7 +135,7 @@ export default function HomeScreen() {
         return;
       }
 
-      const best = filtered[0];
+      const best = filtered[0]; // confideneza più alta dopo NMS
       router.push({
         pathname: "/modal",
         params: {

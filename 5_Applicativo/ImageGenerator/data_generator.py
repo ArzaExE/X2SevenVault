@@ -130,8 +130,8 @@ def create_element(objects_paths, backgrounds_paths, classes_names):
         flip.transformers.data_augmentation.RandomResize(
             mode='symmetric_w',
             relation='parent',
-            w_percentage_min=0.15,
-            w_percentage_max=0.4
+            w_percentage_min=0.15,  # Percentuale della grandezza minima dell’oggetto
+            w_percentage_max=0.4  # Percentuale della grandezza massima dell’oggetto
         )
     ]
     

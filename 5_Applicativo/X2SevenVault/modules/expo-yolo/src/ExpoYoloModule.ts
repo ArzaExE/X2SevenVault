@@ -3,9 +3,6 @@ import { NativeModule, requireNativeModule } from "expo";
 import { ExpoYoloModuleEvents } from "./ExpoYolo.types";
 
 declare class ExpoYoloModule extends NativeModule<ExpoYoloModuleEvents> {
-  PI: number;
-  hello(): string;
-  setValueAsync(value: string): Promise<void>;
   performInference(uri: string): Promise<number[]>;
   closeInterpreter(): void;
 }
