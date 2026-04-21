@@ -17,7 +17,8 @@ class FirestoreService
         // Creazione dell'oggetto ServiceAccountCredentials con le credenziali del file fornito da firestore
         $credentials = new ServiceAccountCredentials(
             env('GOOGLE_SCOPE'),
-            json_decode(file_get_contents(base_path(env('FIREBASE_CREDENTIALS'))), true) // con true trasforma in array il risultato, senza si ha un oggetto.
+            // con true trasforma in array il risultato, senza si ha un oggetto.
+            json_decode(file_get_contents(base_path(env('FIREBASE_CREDENTIALS'))), true) 
         );
 
         // Si ottiene il token da Google (OAuth) a partire dalle credenziali istanziate in precedenza
