@@ -199,7 +199,7 @@ class WarehouseController extends Controller
             return response()->json(['error' => "Can't delete warehouse with items on it"], 409);
         }
 
-        $delete = $this->firestore->deleteDocument('warehouse_management', $warehouseId);
+        $delete = $this->firestore->deleteRecursive('warehouse_management', $warehouseId);
 
         if (!$delete) {
             return response()->json(['error' => 'Error while deleting warehouse'], 500);

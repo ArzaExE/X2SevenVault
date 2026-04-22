@@ -171,7 +171,7 @@ export default function ModalScreen() {
             <View style={styles.locationRowContent}>
               <Text style={styles.locationRowLabel}>EXACT SHELF LOCATION</Text>
               <Text style={styles.locationRowValueLarge}>
-                {item?.shelf_id.replace(/_/g, " ") ?? "N/A"}
+                {item?.shelf_id?.replace(/_/g, " ") ?? "N/A"}
               </Text>
             </View>
             <View style={styles.activeDot} />

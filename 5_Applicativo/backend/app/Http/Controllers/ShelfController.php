@@ -137,9 +137,15 @@ class ShelfController extends Controller
             return response()->json(['error' => 'Shelf not found'], 404);
         }
 
-        $items = $this->itemController->searchItems($shelfId);
+        $itemsShelf = $this->itemController->searchItems($shelfId);
 
-        if($items) {
+        $itemsInThisShelf = array_filter($itemsShelf, fn($item) =>
+            $item['warehouse_id'] === $warehouseId &&
+            $item['aisle_id'] === $aisleId &&
+            $item['shelf_id'] === $shelfId
+        );
+
+        if(!empty($itemsInThisShelf)) {
             return response()->json(['error' => "Can't delete shelf with items on it"], 409);
         }
 

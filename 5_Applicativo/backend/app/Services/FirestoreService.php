@@ -18,7 +18,7 @@ class FirestoreService
         $credentials = new ServiceAccountCredentials(
             env('GOOGLE_SCOPE'),
             // con true trasforma in array il risultato, senza si ha un oggetto.
-            json_decode(file_get_contents(base_path(env('FIREBASE_CREDENTIALS'))), true) 
+            json_decode(file_get_contents(base_path(env('FIREBASE_CREDENTIALS'))), true)
         );
 
         // Si ottiene il token da Google (OAuth) a partire dalle credenziali istanziate in precedenza
@@ -102,6 +102,27 @@ class FirestoreService
 
         return true;
 
+    }
+
+    public function deleteRecursive(string $collection, string $id): bool
+    {
+        $knownSubcollections = [
+            'warehouse_management' => ['aisles'],
+            'aisles'               => ['shelves'],
+            'shelves'              => [],
+        ];
+
+        $collectionName = basename($collection);
+        $subs = $knownSubcollections[$collectionName] ?? [];
+
+        foreach ($subs as $sub) {
+            $docs = $this->getCollection("{$collection}/{$id}/{$sub}");
+            foreach ($docs as $doc) {
+                $this->deleteRecursive("{$collection}/{$id}/{$sub}", $doc['id']);
+            }
+        }
+
+        return $this->deleteDocument($collection, $id);
     }
 
     /**

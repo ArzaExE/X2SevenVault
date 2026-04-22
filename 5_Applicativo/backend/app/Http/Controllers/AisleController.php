@@ -133,13 +133,15 @@ class AisleController extends Controller
             return response()->json(['error' => 'Aisle not found'], 404);
         }
 
-        $items = $this->itemController->searchItems($aisleId);
+        $itemsAisle = $this->itemController->searchItems($aisleId);
+        $itemsInThisWarehouse = array_filter($itemsAisle, fn($item) => $item['warehouse_id'] === $warehouseId);
 
-        if($items) {
+
+        if(!empty($itemsInThisWarehouse)) {
             return response()->json(['error' => "Can't delete aisle with items on it"], 409);
         }
 
-        $delete = $this->firestore->deleteDocument("warehouse_management/{$warehouseId}/aisles", $aisleId);
+        $delete = $this->firestore->deleteRecursive("warehouse_management/{$warehouseId}/aisles", $aisleId);
 
         if (!$delete) {
             return response()->json(['error' => 'Error while deleting aisle'], 500);
