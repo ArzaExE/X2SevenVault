@@ -1,0 +1,46 @@
+[
+  {
+    "id": "C3e7hDNSHIWSNVLK114QRjhReUU2",
+    "email": "admin@samt.ch",
+    "is_active": true,
+    "role": {
+      "role_id": 1,
+      "role_name": "admin",
+      "description": "Full system access"
+    },
+    "full_name": "Matvej Rossi"
+  },
+  {
+    "id": "H244BfxodPTof0EB6Uh1DBDojgo1",
+    "is_active": true,
+    "role": {
+      "role_id": 2,
+      "role_name": "operator",
+      "description": "Standard operational access"
+    },
+    "full_name": "Paolo",
+    "email": "paolo@comes.com"
+  },
+  {
+    "id": "MjNuQV0jenMoJ5uWgtmR4WPiNC52",
+    "email": "c8231432@gmail.com",
+    "full_name": "CHOPPA",
+    "is_active": true,
+    "role": {
+      "role_id": 1,
+      "role_name": "admin",
+      "description": "Full system access"
+    }
+  },
+  {
+    "id": "a5cEHlU7X6bTW70mGYO4k25Azv53",
+    "full_name": "Arza",
+    "email": "yku197@student.edu.ti.ch",
+    "role": {
+      "role_id": 1,
+      "role_name": "admin",
+      "description": "Full system access"
+    },
+    "is_active": false
+  }
+]

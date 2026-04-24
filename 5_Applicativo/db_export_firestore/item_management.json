@@ -1,0 +1,137 @@
+[
+  {
+    "id": "C6POjYYO6wrGXkEeMJIO",
+    "description": "Wireless in-ear headphones with active noise cancellation and spatial audio support",
+    "is_active": true,
+    "name": "Apple AirPods Pro 2nd Gen",
+    "is_ai": true,
+    "shelf_id": "A02",
+    "physical_properties": {
+      "weight": {
+        "value": 50.8,
+        "unit": "g"
+      },
+      "width": {
+        "unit": "mm",
+        "value": 46.4
+      },
+      "height": {
+        "value": 30.9,
+        "unit": "mm"
+      }
+    },
+    "quantity": 12,
+    "item_id": "C6POjYYO6wrGXkEeMJIO",
+    "warehouse_id": "WH_C",
+    "aisle_id": "A1",
+    "ai_class_id": "54RI8C55qQ4WrKf5E7Kw"
+  },
+  {
+    "id": "PG2ePlo5sXLLWLCiQ2WP",
+    "is_active": true,
+    "quantity": 35,
+    "item_id": "PG2ePlo5sXLLWLCiQ2WP",
+    "description": "Double-wall insulated stainless steel bottle, keeps beverages cold 24h or hot 12h",
+    "shelf_id": "A01",
+    "aisle_id": "A1",
+    "warehouse_id": "WH_C",
+    "name": "Stainless Steel Water Bottle 750ml",
+    "physical_properties": {
+      "width": {
+        "unit": "mm",
+        "value": 75
+      },
+      "weight": {
+        "unit": "g",
+        "value": 320
+      },
+      "height": {
+        "unit": "mm",
+        "value": 270
+      }
+    },
+    "is_ai": true,
+    "ai_class_id": "CkCb1rbaYAGOSoGTsCZD"
+  },
+  {
+    "id": "Q3VMNgO8WJCDJIipohFZ",
+    "quantity": 1,
+    "description": null,
+    "ai_class_id": "BCLMWkYuMkNOHmBtCRRn",
+    "shelf_id": "A03",
+    "physical_properties": {
+      "width": {
+        "unit": "mm",
+        "value": 68
+      },
+      "weight": {
+        "unit": "g",
+        "value": 95.2
+      },
+      "height": {
+        "value": 42,
+        "unit": "mm"
+      }
+    },
+    "name": "Schuko Electric Socket Outlet",
+    "is_active": true,
+    "is_ai": true,
+    "aisle_id": "A1",
+    "item_id": "Q3VMNgO8WJCDJIipohFZ",
+    "warehouse_id": "WH_C"
+  },
+  {
+    "id": "a204YaD2ydhbeYgDuOOr",
+    "ai_class_id": "ZFo3kNGc7sxISiaVCApc",
+    "description": "Hard hat compliant with EN397 standard, ABS shell with adjustable suspension system",
+    "quantity": 20,
+    "is_active": true,
+    "name": "Industrial Safety Helmet EN397",
+    "physical_properties": {
+      "height": {
+        "unit": "mm",
+        "value": 175
+      },
+      "width": {
+        "unit": "mm",
+        "value": 230
+      },
+      "weight": {
+        "unit": "g",
+        "value": 385
+      }
+    },
+    "shelf_id": "B01",
+    "warehouse_id": "WH_C",
+    "item_id": "a204YaD2ydhbeYgDuOOr",
+    "aisle_id": "B2",
+    "is_ai": true
+  },
+  {
+    "id": "b4683bMm7v8oYizXbCpH",
+    "warehouse_id": "WH_C",
+    "physical_properties": {
+      "weight": {
+        "unit": "g",
+        "value": 37
+      },
+      "height": {
+        "unit": "mm",
+        "value": 53.4
+      },
+      "width": {
+        "unit": "mm",
+        "value": 68.6
+      }
+    },
+    "aisle_id": "B2",
+    "is_active": true,
+    "name": "Arduino Uno R4 WiFi",
+    "ai_class_id": "dHTBi2xfBs0CdWJlSyA2",
+    "item_id": "b4683bMm7v8oYizXbCpH",
+    "quantity": 25,
+    "is_ai": true,
+    "shelf_id": "B02",
+    "description": "Microcontroller board based on Renesas RA4M1, built-in WiFi and LED matrix"
+  }
+]

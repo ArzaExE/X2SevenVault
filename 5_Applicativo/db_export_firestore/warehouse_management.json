@@ -1,0 +1,94 @@
+[
+  {
+    "id": "WH_B",
+    "name": "Warehouse B",
+    "description": null,
+    "is_active": true
+  },
+  {
+    "id": "WH_C",
+    "name": "Warehouse C",
+    "description": null,
+    "is_active": true,
+    "aisles": [
+      {
+        "id": "A1",
+        "description": null,
+        "is_active": true,
+        "name": "Aisle A1",
+        "shelves": [
+          {
+            "id": "A01",
+            "name": "Shelf A01",
+            "description": null,
+            "is_active": true
+          },
+          {
+            "id": "A02",
+            "name": "Shelf A02",
+            "description": null,
+            "is_active": true
+          },
+          {
+            "id": "A03",
+            "name": "Shelf A03",
+            "description": null,
+            "is_active": true
+          }
+        ]
+      },
+      {
+        "id": "B2",
+        "name": "Aisle B2",
+        "description": null,
+        "is_active": true,
+        "shelves": [
+          {
+            "id": "B01",
+            "name": "Shelf B01",
+            "description": null,
+            "is_active": true
+          },
+          {
+            "id": "B02",
+            "name": "Shelf B02",
+            "description": null,
+            "is_active": true
+          },
+          {
+            "id": "B03",
+            "name": "Shelf B03",
+            "description": null,
+            "is_active": true
+          }
+        ]
+      },
+      {
+        "id": "C3",
+        "name": "Aisle C3",
+        "description": null,
+        "is_active": true,
+        "shelves": [
+          {
+            "id": "C01",
+            "name": "Shelf C01",
+            "description": null,
+            "is_active": true
+          },
+          {
+            "id": "C02",
+            "name": "Shelf C02",
+            "description": null,
+            "is_active": true
+          },
+          {
+            "id": "C03",
+            "name": "Shelf C03",
+            "description": null,
+            "is_active": true
+          }
+        ]
+      }
+    ]
+  }
+]

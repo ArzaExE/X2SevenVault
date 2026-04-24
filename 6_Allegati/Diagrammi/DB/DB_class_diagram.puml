@@ -9,7 +9,7 @@ package "Warehouse Management" {
     name : string
     description : string
     is_active : boolean
-    aisle : Aisle[]
+    aisles : Aisle[]
   }
 
   entity Aisle {
@@ -18,7 +18,7 @@ package "Warehouse Management" {
     name : string
     description : string
     is_active : boolean
-    shelf : Shelf[]
+    shelves : Shelf[]
   }
 
   entity Shelf {
@@ -27,56 +27,17 @@ package "Warehouse Management" {
     name : string
     description : string
     is_active : boolean
-    item : Item[]
-  }
-
-  entity Item {
-    * item_id : string
-    --
-    name : string
-    description : string
-    ai_class_id : integer
-    quantity : integer
-    is_active : boolean
-    reference_photo : string
-    physical_property : PhysicalProperty[]
-    warehouse_id : string
-    aisle_id : string
-    shelf_id : string
-  }
-
-  entity PhysicalProperty {
-    * physical_property_id : string
-    --
-    weight : Weight[]
-    width : Width[]
-    height : Height[]
-  }
-
-  entity Weight {
-    weight.unit : string
-    weight.value : float
-  }
-
-  entity Width {
-    width.unit : string
-    width.value : float
-  }
-
-  entity Height {
-    height.unit : string
-    height.value : float
   }
 }
 
 package "User Management" {
   entity User {
-    * user_id : string
+    * id : string
     --
     email : string
-    password_hash : string
     full_name : string
     is_active : boolean
+    role : Role
   }
 
   entity Role {
@@ -84,6 +45,44 @@ package "User Management" {
     --
     role_name : string
     description : string
+  }
+}
+
+package "Item Management" {
+  entity Item {
+    * item_id : string
+    --
+    name : string
+    description : string
+    ai_class_id : string
+    quantity : integer
+    is_active : boolean
+    is_ai : boolean
+    physical_properties : PhysicalProperties
+    warehouse_id : string
+    aisle_id : string
+    shelf_id : string
+  }
+
+  entity PhysicalProperties {
+    weight : Weight
+    width : Width
+    height : Height
+  }
+
+  entity Weight {
+    unit : string
+    value : float
+  }
+
+  entity Width {
+    unit : string
+    value : float
+  }
+
+  entity Height {
+    unit : string
+    value : float
   }
 }
 @enduml

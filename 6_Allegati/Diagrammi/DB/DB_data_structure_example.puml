@@ -3,21 +3,21 @@
   "warehouse_management": {
     "warehouses": [
       {
-        "warehouse_id": "WH_A",
-        "name": "Warehouse A",
-        "description": "Main workshop storage",
+        "warehouse_id": "string",
+        "name": "string",
+        "description": "string",
         "is_active": true,
-        "aisles":[
+        "aisles": [
           {
-            "aisle_id": "A1",
-            "name": "Aisle A1",
-            "description": "Hand tools area",
+            "aisle_id": "string",
+            "name": "string",
+            "description": "string",
             "is_active": true,
-            "shelves":[
+            "shelves": [
               {
-                "shelf_id": "A1_S1",
-                "name": "Shelf A1-1",
-                "description": "Middle level",
+                "shelf_id": "string",
+                "name": "string",
+                "description": "string",
                 "is_active": true
               }
             ]
@@ -26,53 +26,45 @@
       }
     ]
   },
+
   "item_management": {
     "items": [
       {
-        "item_id": "ITEM_001",
-        "name": "Universal Pliers",
-        "description": "Knipex 150mm fine jaws",
-        "ai_class_id": 0,
-        "quantity": 3,
-        "physical_properties": {
-          "weight":{
-            "unit":"kg",
-            "value":0.15
-          },
-          "width":{
-            "unit":"mm",
-            "value":1500
-          },
-          "height":{
-            "unit":"mm",
-            "value":20
-          }
-        },
+        "item_id": "string",
+        "name": "string",
+        "description": "string",
+        "ai_class_id": "string",
+        "quantity": "integer",
         "is_active": true,
-        "reference_photo": "gs://pliers.jpg",
-        "warehouse_id" : "WH_A",
-        "aisle_id" : "A1",
-        "shelf_id" : "A1_S1"
+        "is_ai": true,
+
+        "physical_properties": {
+          "weight": { "unit": "string", "value": "float" },
+          "width": { "unit": "string", "value": "float" },
+          "height": { "unit": "string", "value": "float" }
+        },
+
+        "warehouse_id": "string",
+        "aisle_id": "string",
+        "shelf_id": "string"
       }
     ]
   },
+
   "user_management": {
     "users": [
       {
-        "user_id": "admin_001",
-        "email": "admin@samt.ch",
-        "password_hash": "$2b$10$...",
-        "role":
-          {
-        "role_id": 1,
-        "role_name": "admin",
-        "description": "Full system access"
-      },
-        "full_name": "Mario Rossi",
-        "is_active": true
+        "id": "string",
+        "email": "string",
+        "full_name": "string",
+        "is_active": true,
+        "role": {
+          "role_id": "integer",
+          "role_name": "string",
+          "description": "string"
+        }
       }
     ]
   }
 }
 @endjson
-

@@ -7,90 +7,92 @@ USE x2sevenvault;
 -- 1. WAREHOUSES TABLE
 CREATE TABLE warehouses (
     warehouse_id VARCHAR(10) PRIMARY KEY,
-    name VARCHAR(50) NOT NULL,
-    description TEXT,
-    is_active BOOLEAN DEFAULT TRUE
+    name         VARCHAR(50) NOT NULL,
+    description  TEXT,
+    is_active    BOOLEAN DEFAULT TRUE
 );
 
 -- 2. AISLES TABLE
 CREATE TABLE aisles (
-    aisle_id VARCHAR(10) PRIMARY KEY,
-    name VARCHAR(50) NOT NULL,
+    aisle_id     VARCHAR(10) PRIMARY KEY,
+    name         VARCHAR(50) NOT NULL,
     warehouse_id VARCHAR(10),
-    description TEXT,
-    is_active BOOLEAN DEFAULT TRUE,
+    description  TEXT,
+    is_active    BOOLEAN DEFAULT TRUE,
     FOREIGN KEY (warehouse_id) REFERENCES warehouses(warehouse_id)
 );
 
 -- 3. SHELVES TABLE
 CREATE TABLE shelves (
-    shelf_id VARCHAR(15) PRIMARY KEY,
-    name VARCHAR(50) NOT NULL,
-    aisle_id VARCHAR(10),
+    shelf_id    VARCHAR(15) PRIMARY KEY,
+    name        VARCHAR(50) NOT NULL,
+    aisle_id    VARCHAR(10),
     description VARCHAR(50),
-    is_active BOOLEAN DEFAULT TRUE,
+    is_active   BOOLEAN DEFAULT TRUE,
     FOREIGN KEY (aisle_id) REFERENCES aisles(aisle_id)
 );
 
+-- 4. PHYSICAL PROPERTIES TABLES
 CREATE TABLE weight (
     weight_id INT PRIMARY KEY AUTO_INCREMENT,
-    unit VARCHAR(10) NOT NULL,
-    value INT NOT NULL
+    unit      VARCHAR(10)    NOT NULL,
+    value     DECIMAL(10,2)  NOT NULL
 );
 
 CREATE TABLE width (
     width_id INT PRIMARY KEY AUTO_INCREMENT,
-    unit VARCHAR(10) NOT NULL,
-    value INT NOT NULL
+    unit     VARCHAR(10)    NOT NULL,
+    value    DECIMAL(10,2)  NOT NULL
 );
 
 CREATE TABLE height (
     height_id INT PRIMARY KEY AUTO_INCREMENT,
-    unit VARCHAR(10) NOT NULL,
-    value INT NOT NULL
+    unit      VARCHAR(10)    NOT NULL,
+    value     DECIMAL(10,2)  NOT NULL
 );
 
--- 4. UNIT OF MEASURES TABLE (NEW)
 CREATE TABLE physical_property (
     physical_property_id INT PRIMARY KEY AUTO_INCREMENT,
-    weight_id INT NOT NULL,
-    width_id INT NOT NULL,
-    height_id INT NOT NULL,
+    weight_id            INT NOT NULL,
+    width_id             INT NOT NULL,
+    height_id            INT NOT NULL,
     FOREIGN KEY (weight_id) REFERENCES weight(weight_id),
-    FOREIGN KEY (width_id) REFERENCES width(width_id),
+    FOREIGN KEY (width_id)  REFERENCES width(width_id),
     FOREIGN KEY (height_id) REFERENCES height(height_id)
 );
 
--- 5. USER ROLES TABLE (NEW)
+-- 5. USER ROLES TABLE
 CREATE TABLE user_roles (
-    role_id INT PRIMARY KEY AUTO_INCREMENT,
-    role_name VARCHAR(50) NOT NULL,
+    role_id     INT PRIMARY KEY AUTO_INCREMENT,
+    role_name   VARCHAR(50) NOT NULL,
     description TEXT
 );
 
 -- 6. USERS TABLE
 CREATE TABLE users (
-    user_id VARCHAR(50) PRIMARY KEY,
-    email VARCHAR(100) UNIQUE NOT NULL,
-    password_hash VARCHAR(255),
-    role_id INT,
+    user_id   VARCHAR(50)  PRIMARY KEY,
+    email     VARCHAR(100) UNIQUE NOT NULL,
+    role_id   INT,
     full_name VARCHAR(100),
     is_active BOOLEAN DEFAULT TRUE,
     FOREIGN KEY (role_id) REFERENCES user_roles(role_id)
 );
 
--- 7. ITEMS TABLE (FULL HIERARCHY)
+-- 7. ITEMS TABLE
 CREATE TABLE items (
-    item_id VARCHAR(15) PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    description TEXT,
-    ai_class_id INT NOT NULL UNIQUE COMMENT 'YOLOv8 class ID',
-    shelf_id VARCHAR(15),
-    quantity INT DEFAULT 1,
-    physical_property_id INT NOT NULL,
-    weight DECIMAL(5,2),
-    is_active BOOLEAN DEFAULT TRUE,
-    reference_photo VARCHAR(500),
-    FOREIGN KEY (shelf_id) REFERENCES shelves(shelf_id),
+    item_id              VARCHAR(50)  PRIMARY KEY,
+    name                 VARCHAR(100) NOT NULL,
+    description          TEXT,
+    ai_class_id          VARCHAR(50)  NOT NULL UNIQUE COMMENT 'AI classifier class ID',
+    is_ai                BOOLEAN      DEFAULT FALSE,
+    shelf_id             VARCHAR(15),
+    aisle_id             VARCHAR(10),
+    warehouse_id         VARCHAR(10),
+    quantity             INT          DEFAULT 1,
+    physical_property_id INT          NOT NULL,
+    is_active            BOOLEAN      DEFAULT TRUE,
+    FOREIGN KEY (shelf_id)             REFERENCES shelves(shelf_id),
+    FOREIGN KEY (aisle_id)             REFERENCES aisles(aisle_id),
+    FOREIGN KEY (warehouse_id)         REFERENCES warehouses(warehouse_id),
     FOREIGN KEY (physical_property_id) REFERENCES physical_property(physical_property_id)
 );
