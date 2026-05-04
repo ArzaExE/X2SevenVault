@@ -2,8 +2,7 @@ import axios from 'axios';
 import { auth } from './firebase';
 
 const api = axios.create({
-    // TODO: .env
-    baseURL: 'http://localhost:8000/api',
+    baseURL: '/api',
 });
 
 // Prima di ogni richiesta, aggiunge automaticamente il token Firebase

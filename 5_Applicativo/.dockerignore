@@ -1,0 +1,7 @@
+# Only include the app source needed for the Docker build.
+*
+!backend/
+!frontend/
+!Dockerfile
+!docker-compose.yml
+!.dockerignore
