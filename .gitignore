@@ -11,3 +11,6 @@ Thumbs.db
 *~
 *.tmp
 *.bak
+5_Applicativo/X2SevenVault/.env
+5_Applicativo/X2SevenVault/GoogleService-Info.plist
+5_Applicativo/X2SevenVault/google-services.json
